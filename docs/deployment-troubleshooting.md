@@ -13,6 +13,29 @@
 
 ---
 
+## 0.5 请求 `/auth/v1/user` 返回 403 Forbidden
+
+若控制台或 Network 里看到 **`/auth/v1/user` 返回 403**，说明 Supabase Auth **拒绝了「获取当前用户」的请求**，常见原因：
+
+1. **Site URL 与生产域名不一致**  
+   - [Supabase Dashboard](https://supabase.com/dashboard) → 你的项目 → **Authentication** → **URL Configuration**  
+   - **Site URL** 必须填成你的**生产环境首页**，例如：`https://你的域名.com` 或 `https://xxx.vercel.app`  
+   - 不能是 `http://localhost:3000`，否则从生产域名发起的请求会被拒绝（403）。
+
+2. **Redirect URLs 未包含生产回调**  
+   - 同上 → **Redirect URLs** 中要有：`https://你的域名.com/auth/callback`（或你的实际生产域名 + `/auth/callback`）  
+   - 否则登录回调可能失败，后续带 Session 的请求也可能被拒。
+
+3. **生产环境用了错误的 Supabase 配置**  
+   - 确认部署平台（如 Vercel）的环境变量里：  
+     - `NEXT_PUBLIC_SUPABASE_URL` = 当前 Supabase 项目的 URL  
+     - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = 该项目的 anon/public key  
+   - 若填成别的项目或旧 key，也会出现 403。
+
+改完 **Site URL / Redirect URLs / 环境变量** 后，清掉浏览器里该站点的 Cookie 再重新登录试一次。
+
+---
+
 ## 1. 确认 Supabase 生产环境回调地址
 
 登录依赖 OAuth 回调，Session 通过 Cookie 写入。**生产域名必须加入 Supabase 白名单**：
