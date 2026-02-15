@@ -26,7 +26,13 @@ export async function getDocuments(folderId?: string | null): Promise<Document[]
   return data || [];
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function getDocument(id: string): Promise<Document | null> {
+  if (!id || !UUID_REGEX.test(id.trim())) {
+    return null; // Invalid UUID (e.g. placeholder %%drp:id:xxx%%) causes PostgreSQL 22P02
+  }
+
   const supabase = createClient();
 
   const { data, error } = await supabase

@@ -19,6 +19,12 @@ import { ResizeHandle } from '@/components/ui/resize-handle';
 import { SaveToast, type SaveToastType } from '@/components/SaveToast';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 
+/** Supabase document id is UUID; reject placeholders like %%drp:id:xxx%% */
+function isValidDocumentId(id: string): boolean {
+  if (!id || typeof id !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id.trim());
+}
+
 export default function DocumentPage() {
   const params = useParams();
   const documentId = params.id as string;
@@ -83,6 +89,13 @@ export default function DocumentPage() {
   // Load document
   useEffect(() => {
     const init = async () => {
+      // Invalid id (e.g. placeholder %%drp:id:xxx%%) causes PostgreSQL 22P02; redirect early
+      if (!isValidDocumentId(documentId)) {
+        router.replace('/documents');
+        setIsLoading(false);
+        return;
+      }
+
       const debug =
         typeof window !== 'undefined' &&
         new URLSearchParams(window.location.search).get('debug') === '1';

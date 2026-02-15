@@ -2,6 +2,17 @@
 
 上线后登录出现「Document not found / This document doesn't exist or you don't have access to it」，而本地正常，可按下面步骤排查。
 
+## 0. 控制台出现「invalid input syntax for type uuid」/ 22P02
+
+若控制台里看到 `id: "%%drp:id:xxx%%"` 或类似占位符，说明当前文档 ID **不是有效 UUID**（可能是占位符、缓存或外部注入的链接）。应用已做如下处理：
+
+- **文档页**：若 URL 中的 `[id]` 不是合法 UUID，会直接跳转到 `/documents`，不再请求 Supabase。
+- **getDocument**：若传入的 id 不是合法 UUID，会直接返回 `null`，不发起请求，避免 PostgreSQL 报 22P02。
+
+若仍出现 22P02，请检查是否有其他地方（书签、外部链接、文档内容里的链接）使用了占位符或错误格式的文档 ID。
+
+---
+
 ## 1. 确认 Supabase 生产环境回调地址
 
 登录依赖 OAuth 回调，Session 通过 Cookie 写入。**生产域名必须加入 Supabase 白名单**：
