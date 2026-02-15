@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { marked } from 'marked';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Loader2, Send, MessageSquare, X, Check, Ban } from 'lucide-react';
+import { Loader2, Send, MessageSquare, X, Check, Ban, StopCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { applyEditTool } from '@/lib/editor/apply-edit-tools';
 import { sanitizeHtml } from '@/lib/chat/sanitize-html';
@@ -202,7 +202,10 @@ export function ChatPanel({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+  const [streamingToolCalls, setStreamingToolCalls] = useState<Array<{ name: string; arguments: string }>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const setToolChoice = (messageId: string, toolIndex: number, choice: 'apply' | 'decline') => {
     setMessages((prev) =>
@@ -269,7 +272,17 @@ export function ChatPanel({
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
-  }, [messages]);
+  }, [messages, streamingContent, streamingToolCalls]);
+
+  const cancelRequest = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsLoading(false);
+    setStreamingContent('');
+    setStreamingToolCalls([]);
+  }, []);
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -283,12 +296,18 @@ export function ChatPanel({
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
+    setStreamingContent('');
+    setStreamingToolCalls([]);
+
+    const documentMarkdown = getMarkdown();
+    const selectionMarkdown = getSelectionMarkdown?.()?.trim() || undefined;
+
+    // Create abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     try {
-      const documentMarkdown = getMarkdown();
-      const selectionMarkdown = getSelectionMarkdown?.()?.trim() || undefined;
-
-      const res = await fetch('/api/ai/chat', {
+      const res = await fetch('/api/ai/chat-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -299,11 +318,11 @@ export function ChatPanel({
           documentMarkdown,
           selectionMarkdown: selectionMarkdown || null,
         }),
+        signal: abortController.signal,
       });
 
-      const data = await res.json().catch(() => ({}));
-
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
         setMessages((prev) => [
           ...prev,
           {
@@ -315,51 +334,91 @@ export function ChatPanel({
         return;
       }
 
-      const assistantContent = data.message ?? '';
-      const toolCalls = Array.isArray(data.toolCalls) ? data.toolCalls : [];
-      const serverFinalDoc = typeof data.documentMarkdown === 'string' ? data.documentMarkdown : undefined;
-      let editError: string | undefined;
-      let currentMarkdown = documentMarkdown;
-      const toolCallsDisplay: ToolCallDisplay[] = [];
+      // Read SSE stream
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `err-${Date.now()}`,
+            role: 'assistant',
+            content: 'No response stream',
+          },
+        ]);
+        return;
+      }
 
-      for (const tc of toolCalls) {
-        if (tc.error) {
-          editError = tc.error;
-        }
-        const name = tc.name;
-        const args = tc.arguments;
-        const argsObj =
-          args && typeof args === 'object' && args !== null
-            ? (args as Record<string, unknown>)
-            : {};
-        const serverResult = tc.result && typeof tc.result === 'object' && 'applied' in tc.result
-          ? (tc.result as { applied: boolean; error?: string })
-          : undefined;
-        if (name) {
-          toolCallsDisplay.push({
-            name,
-            arguments: argsObj,
-            applied: serverResult?.applied ?? false,
-            userChoice: 'apply' as const,
-          });
-        }
-        if (!name || !argsObj || typeof argsObj !== 'object') continue;
-        if (serverResult !== undefined) {
-          if (serverResult.applied) currentMarkdown = (() => { const r = applyEditTool(currentMarkdown, name, argsObj); return r.applied ? r.newMarkdown : currentMarkdown; })();
-        } else {
-          const result = applyEditTool(currentMarkdown, name, argsObj);
-          if (result.applied) {
-            currentMarkdown = result.newMarkdown;
-            const last = toolCallsDisplay[toolCallsDisplay.length - 1];
-            if (last) last.applied = true;
-          } else if (result.error) {
-            editError = result.error;
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalContent = '';
+      let finalToolCalls: Array<{
+        name: string;
+        arguments: Record<string, unknown>;
+        applied: boolean;
+        error?: string;
+      }> = [];
+      let finalDoc: string | undefined;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+
+          try {
+            const data = JSON.parse(line.slice(6));
+
+            if (data.type === 'content') {
+              finalContent += data.content;
+              setStreamingContent(finalContent);
+            }
+
+            if (data.type === 'tool_call_delta') {
+              setStreamingToolCalls((prev) => {
+                const next = [...prev];
+                next[data.index] = data.toolCall;
+                return next;
+              });
+            }
+
+            if (data.type === 'done') {
+              finalContent = data.content;
+              finalToolCalls = data.toolCalls || [];
+              finalDoc = data.documentMarkdown;
+            }
+
+            if (data.type === 'error') {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `err-${Date.now()}`,
+                  role: 'assistant',
+                  content: data.error,
+                },
+              ]);
+              return;
+            }
+          } catch {
+            // Ignore parse errors for individual lines
           }
         }
       }
 
+      // Process final tool calls
+      const toolCallsDisplay: ToolCallDisplay[] = finalToolCalls.map((tc) => ({
+        name: tc.name,
+        arguments: tc.arguments,
+        applied: tc.applied,
+        userChoice: 'apply' as const,
+      }));
+
       const appliedCount = toolCallsDisplay.filter((t) => t.applied).length;
-      const hasPendingEdits = toolCallsDisplay.length > 0 && (serverFinalDoc != null || appliedCount > 0);
+      const hasPendingEdits = toolCallsDisplay.length > 0 && appliedCount > 0;
       const assistantId = `assistant-${Date.now()}`;
 
       setMessages((prev) => [
@@ -367,28 +426,44 @@ export function ChatPanel({
         {
           id: assistantId,
           role: 'assistant',
-          content: assistantContent,
+          content: finalContent,
           appliedEdits: hasPendingEdits ? undefined : (appliedCount > 0 ? appliedCount : undefined),
-          editError,
-          toolCalls:
-            toolCallsDisplay.length > 0 ? toolCallsDisplay : undefined,
+          toolCalls: toolCallsDisplay.length > 0 ? toolCallsDisplay : undefined,
           pendingApply: hasPendingEdits,
           initialMarkdown: hasPendingEdits ? documentMarkdown : undefined,
-          pendingNewMarkdown: hasPendingEdits ? (serverFinalDoc ?? currentMarkdown) : undefined,
+          pendingNewMarkdown: hasPendingEdits ? finalDoc : undefined,
         },
       ]);
+      setStreamingContent('');
+      setStreamingToolCalls([]);
+
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `err-${Date.now()}`,
-          role: 'assistant',
-          content: message,
-        },
-      ]);
+      if (err instanceof Error && err.name === 'AbortError') {
+        // User cancelled - add a note
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `cancelled-${Date.now()}`,
+            role: 'assistant',
+            content: '（已取消）',
+          },
+        ]);
+      } else {
+        const message = err instanceof Error ? err.message : String(err);
+        setMessages((prev) => [
+          ...prev,
+            {
+            id: `err-${Date.now()}`,
+            role: 'assistant',
+            content: message,
+          },
+        ]);
+      }
     } finally {
       setIsLoading(false);
+      setStreamingContent('');
+      setStreamingToolCalls([]);
+      abortControllerRef.current = null;
     }
   };
 
@@ -499,7 +574,24 @@ export function ChatPanel({
               </div>
             </div>
           ))}
-          {isLoading && (
+          {/* Streaming content / Loading indicator */}
+          {isLoading && (streamingContent || streamingToolCalls.length > 0) && (
+            <div className="flex justify-start">
+              <div className="max-w-[85%] rounded-lg px-3 py-2 bg-muted text-sm">
+                {streamingContent && (
+                  <ChatMessageContent content={streamingContent} />
+                )}
+                {streamingToolCalls.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-border/50 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      正在执行 {streamingToolCalls.length} 个编辑操作…
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          {isLoading && !streamingContent && streamingToolCalls.length === 0 && (
             <div className="flex justify-start">
               <div className="rounded-lg px-3 py-2 bg-muted flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -524,12 +616,14 @@ export function ChatPanel({
           />
           <Button
             size="icon"
-            onClick={sendMessage}
-            disabled={isLoading || !input.trim()}
+            onClick={isLoading ? cancelRequest : sendMessage}
+            disabled={!isLoading && !input.trim()}
+            variant={isLoading ? 'destructive' : 'default'}
             className="shrink-0"
+            title={isLoading ? '取消' : '发送'}
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <StopCircle className="h-4 w-4" />
             ) : (
               <Send className="h-4 w-4" />
             )}
