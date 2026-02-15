@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useDocument } from '@/hooks/useDocument';
 import { useFolder } from '@/hooks/useFolder';
@@ -27,13 +27,28 @@ function isValidDocumentId(id: string): boolean {
 
 export default function DocumentPage() {
   const params = useParams();
-  const documentId = params.id as string;
   const router = useRouter();
+
+  // WORKAROUND: useParams() is returning incorrect values in production.
+  // Parse the document ID directly from the URL pathname instead.
+  const documentId = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return params.id as string; // SSR fallback
+    }
+    const pathname = window.location.pathname;
+    const match = pathname.match(/\/document\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
+    if (match) {
+      return match[1];
+    }
+    // Fallback to useParams if no match
+    return params.id as string;
+  }, [params.id]);
 
   // Debug: log the actual URL and params
   console.log('[document] render', {
     url: typeof window !== 'undefined' ? window.location.href : 'SSR',
-    paramsId: documentId,
+    paramsId: params.id,
+    resolvedId: documentId,
     isValidUUID: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(documentId),
   });
   const [isLoading, setIsLoading] = useState(true);
