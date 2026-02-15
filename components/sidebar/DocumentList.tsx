@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { FileText, MoreHorizontal, Pin, PinOff, Trash2, Edit2 } from 'lucide-react';
 import type { Document } from '@/lib/types';
+
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidDocumentId(id: string): boolean {
+  return UUID_REGEX.test(id);
+}
 
 interface DocumentListProps {
   documents: Document[];
@@ -30,13 +37,23 @@ export function DocumentList({
   onTogglePin,
   onRenameDocument,
 }: DocumentListProps) {
+  // Filter out documents with invalid IDs (e.g., placeholders like %%drp:id:xxx%%)
+  const validDocuments = useMemo(
+    () => documents.filter((doc) => isValidDocumentId(doc.id)),
+    [documents]
+  );
+
   // Sort: pinned first, then by last edited
-  const sortedDocuments = [...documents].sort((a, b) => {
-    if (a.is_pinned !== b.is_pinned) {
-      return a.is_pinned ? -1 : 1;
-    }
-    return new Date(b.last_edited_at).getTime() - new Date(a.last_edited_at).getTime();
-  });
+  const sortedDocuments = useMemo(
+    () =>
+      [...validDocuments].sort((a, b) => {
+        if (a.is_pinned !== b.is_pinned) {
+          return a.is_pinned ? -1 : 1;
+        }
+        return new Date(b.last_edited_at).getTime() - new Date(a.last_edited_at).getTime();
+      }),
+    [validDocuments]
+  );
 
   if (sortedDocuments.length === 0) {
     return (
