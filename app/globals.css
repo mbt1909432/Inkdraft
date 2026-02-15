@@ -1,0 +1,583 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+
+    /* Editor specific variables */
+    --editor-bg: 0 0% 100%;
+    --editor-text: 0 0% 10%;
+    --editor-selection: 210 100% 90%;
+    --editor-cursor: 0 0% 10%;
+  }
+
+  /* 国风 · 墨稿 (default) - 水墨风格：宣纸、墨色、淡墨、墨晕 */
+  .guofeng {
+    --background: 45 22% 97%;
+    --foreground: 30 18% 12%;
+    --card: 45 18% 96%;
+    --card-foreground: 30 18% 12%;
+    --popover: 45 18% 96%;
+    --popover-foreground: 30 18% 12%;
+    --primary: 30 18% 12%;
+    --primary-foreground: 45 22% 98%;
+    --secondary: 40 12% 92%;
+    --secondary-foreground: 30 14% 18%;
+    --muted: 42 10% 93%;
+    --muted-foreground: 30 8% 40%;
+    --accent: 40 10% 90%;
+    --accent-foreground: 30 18% 12%;
+    --destructive: 0 45% 45%;
+    --destructive-foreground: 45 22% 98%;
+    --border: 35 10% 88%;
+    --input: 35 10% 88%;
+    --ring: 30 18% 25%;
+    --chart-1: 30 15% 25%;
+    --chart-2: 30 10% 35%;
+    --chart-3: 35 12% 30%;
+    --chart-4: 28 14% 28%;
+    --chart-5: 32 10% 32%;
+
+    --radius: 0.25rem;
+    --editor-bg: 48 20% 98%;
+    --editor-text: 30 18% 12%;
+    --editor-selection: 40 25% 90%;
+    --editor-cursor: 30 18% 12%;
+  }
+
+  /* Sepia theme - eye-protection mode */
+  .sepia {
+    --background: 40 40% 94%;
+    --foreground: 30 20% 20%;
+    --card: 40 35% 92%;
+    --card-foreground: 30 20% 20%;
+    --popover: 40 35% 92%;
+    --popover-foreground: 30 20% 20%;
+    --primary: 30 50% 30%;
+    --primary-foreground: 40 40% 96%;
+    --secondary: 40 30% 88%;
+    --secondary-foreground: 30 20% 20%;
+    --muted: 40 25% 88%;
+    --muted-foreground: 30 15% 40%;
+    --accent: 40 30% 85%;
+    --accent-foreground: 30 20% 20%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 40 40% 96%;
+    --border: 35 25% 80%;
+    --input: 35 25% 80%;
+    --ring: 30 50% 40%;
+
+    /* Editor specific variables for sepia */
+    --editor-bg: 40 40% 94%;
+    --editor-text: 30 20% 20%;
+    --editor-selection: 40 60% 85%;
+    --editor-cursor: 30 20% 20%;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* Editor specific variables for dark */
+    --editor-bg: 0 0% 6%;
+    --editor-text: 0 0% 95%;
+    --editor-selection: 210 50% 40%;
+    --editor-cursor: 0 0% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* 水墨风格：墨晕背景、宣纸质感、宋体感字体 */
+.guofeng body {
+  font-family: var(--font-noto-serif-sc), "Noto Serif SC", "Songti SC", serif;
+  background: linear-gradient(
+      180deg,
+      hsl(48 22% 98.5%) 0%,
+      hsl(45 18% 97%) 50%,
+      hsl(42 20% 95.5%) 100%
+    );
+  min-height: 100vh;
+}
+.guofeng .markdown-editor-wrapper {
+  background: linear-gradient(
+      180deg,
+      hsl(48 18% 98%) 0%,
+      hsl(45 15% 96.5%) 100%
+    ) !important;
+}
+.guofeng [data-slot="card"],
+.guofeng .rounded-2xl.border {
+  box-shadow: none;
+  border-color: hsl(35 10% 88%);
+}
+.guofeng button:not(.bg-primary):not(.bg-destructive),
+.guofeng [role="button"]:not(.bg-primary) {
+  border-color: hsl(35 10% 88%);
+}
+
+/* MDXEditor custom styles */
+.markdown-editor-wrapper {
+  background: hsl(var(--editor-bg));
+  color: hsl(var(--editor-text));
+  min-height: 100%;
+}
+
+.markdown-editor-wrapper .mdxeditor {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+.markdown-editor-wrapper .mdxeditor-root-contenteditable {
+  background: transparent !important;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+
+/* Ensure editor content (contenteditable) can be selected and copied */
+.markdown-editor-wrapper .mdxeditor .prose,
+.markdown-editor-wrapper [contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+
+/* Dark mode: force editor text color so content stays visible */
+.dark .markdown-editor-wrapper,
+.dark .markdown-editor-wrapper .mdxeditor .prose,
+.dark .markdown-editor-wrapper [contenteditable="true"] {
+  color: hsl(var(--editor-text)) !important;
+}
+.dark .markdown-editor-wrapper .prose {
+  --tw-prose-body: hsl(var(--editor-text));
+  --tw-prose-headings: hsl(var(--editor-text));
+  --tw-prose-bold: hsl(var(--editor-text));
+  --tw-prose-quotes: hsl(var(--editor-text));
+  --tw-prose-code: hsl(var(--editor-text));
+}
+.dark .markdown-editor-wrapper .prose p,
+.dark .markdown-editor-wrapper .prose li,
+.dark .markdown-editor-wrapper .prose span {
+  color: inherit;
+}
+
+.markdown-editor-wrapper [data-editor-type]::selection {
+  background: hsl(var(--editor-selection));
+}
+
+/* MDXEditor Toolbar Styles */
+.markdown-editor-wrapper .mdxeditor-toolbar {
+  background: hsl(var(--background)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.markdown-editor-wrapper [data-editor-type="toolbar"] {
+  background: hsl(var(--background)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 2px !important;
+  min-height: 40px !important;
+  padding: 6px 8px !important;
+}
+
+/* 工具栏内所有按钮/分组统一高度和对齐，避免表格等图标错位 */
+.markdown-editor-wrapper [data-editor-type="toolbar"] > div,
+.markdown-editor-wrapper [data-editor-type="toolbar"] [role="toolbar"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 2px !important;
+}
+
+.markdown-editor-wrapper [data-editor-type="toolbar"] button,
+.markdown-editor-wrapper [data-editor-type="toolbar"] [role="group"] button {
+  min-height: 32px !important;
+  min-width: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+}
+
+/* 富文本/源码切换与左侧按钮同一基线，不单独撑高 */
+.markdown-editor-wrapper [data-editor-type="toolbar"] [role="toolbar"]:last-child {
+  align-self: center !important;
+  margin-left: auto !important;
+}
+
+/* 工具栏分隔线统一高度，不撑高整行 */
+.markdown-editor-wrapper [data-editor-type="toolbar"] div[role="separator"] {
+  align-self: center !important;
+  height: 20px !important;
+  margin: 0 4px !important;
+}
+
+/* BlockTypeSelect Dropdown Styles */
+.markdown-editor-wrapper ._selectTrigger_1lbd7_1,
+.markdown-editor-wrapper [data-role="select-trigger"] {
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  min-width: 120px;
+  cursor: pointer;
+}
+
+.markdown-editor-wrapper ._selectContent_1lbd7_79,
+.markdown-editor-wrapper [data-role="select-content"],
+.markdown-editor-wrapper [role="listbox"] {
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  z-index: 100 !important;
+  position: absolute !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 6px !important;
+  margin-top: 4px !important;
+}
+
+.markdown-editor-wrapper [role="option"] {
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+}
+
+.markdown-editor-wrapper [role="option"]:hover,
+.markdown-editor-wrapper [role="option"][data-highlighted] {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Generic dropdown/Select styles for MDXEditor */
+.markdown-editor-wrapper [class*="select"],
+.markdown-editor-wrapper [class*="dropdown"] {
+  z-index: 100 !important;
+}
+
+/* Toolbar button styles */
+.markdown-editor-wrapper button[data-editor-type="toolbar"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+.markdown-editor-wrapper button[data-editor-type="toolbar"]:hover {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Global MDXEditor Portal Styles (dropdowns render in body) */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+[data-radix-select-content],
+[data-radix-select-viewport] {
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  z-index: 9999 !important;
+}
+
+[data-radix-select-item] {
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+[data-radix-select-item]:hover,
+[data-radix-select-item][data-highlighted] {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+  outline: none !important;
+}
+
+[data-radix-select-trigger] {
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  cursor: pointer !important;
+}
+
+/* Ensure MDXEditor modals and popups are visible */
+.mdxeditor-popup-container {
+  z-index: 9999 !important;
+}
+
+/* Prose styling for editor content */
+.prose {
+  --tw-prose-body: hsl(var(--editor-text));
+  --tw-prose-headings: hsl(var(--editor-text));
+  --tw-prose-links: hsl(var(--primary));
+  --tw-prose-bold: hsl(var(--editor-text));
+  --tw-prose-counters: hsl(var(--muted-foreground));
+  --tw-prose-bullets: hsl(var(--muted-foreground));
+  --tw-prose-hr: hsl(var(--border));
+  --tw-prose-quotes: hsl(var(--editor-text));
+  --tw-prose-quote-borders: hsl(var(--border));
+  --tw-prose-captions: hsl(var(--muted-foreground));
+  --tw-prose-code: hsl(var(--editor-text));
+  --tw-prose-pre-code: hsl(var(--foreground));
+  --tw-prose-pre-bg: hsl(var(--muted));
+  --tw-prose-th-borders: hsl(var(--border));
+  --tw-prose-td-borders: hsl(var(--border));
+}
+
+/* Markdown heading sizes – 按级别区分标题字号，覆盖编辑器默认 */
+.markdown-editor-wrapper .prose h1,
+.markdown-editor-wrapper .prose [data-level="1"] {
+  font-size: 2em !important;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  letter-spacing: -0.025em;
+}
+.markdown-editor-wrapper .prose h2,
+.markdown-editor-wrapper .prose [data-level="2"] {
+  font-size: 1.5em !important;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.markdown-editor-wrapper .prose h3,
+.markdown-editor-wrapper .prose [data-level="3"] {
+  font-size: 1.25em !important;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.25em;
+  margin-bottom: 0.375em;
+}
+.markdown-editor-wrapper .prose h4,
+.markdown-editor-wrapper .prose [data-level="4"] {
+  font-size: 1.125em !important;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1em;
+  margin-bottom: 0.25em;
+}
+.markdown-editor-wrapper .prose h5,
+.markdown-editor-wrapper .prose [data-level="5"] {
+  font-size: 1em !important;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-top: 0.75em;
+  margin-bottom: 0.25em;
+}
+.markdown-editor-wrapper .prose h6,
+.markdown-editor-wrapper .prose [data-level="6"] {
+  font-size: 0.875em !important;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  color: hsl(var(--muted-foreground));
+}
+/* List and bold in editor (列表与加粗会渲染) */
+.markdown-editor-wrapper .prose ul,
+.markdown-editor-wrapper .prose ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.75em;
+  padding-left: 1.5em;
+}
+.markdown-editor-wrapper .prose ul li,
+.markdown-editor-wrapper .prose ol li {
+  margin-bottom: 0.25em;
+}
+.markdown-editor-wrapper .prose strong,
+.markdown-editor-wrapper .prose b,
+.markdown-editor-wrapper .prose [data-format="bold"] {
+  font-weight: 700;
+  color: inherit;
+}
+
+.markdown-editor-wrapper .prose p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  line-height: 1.75;
+}
+.markdown-editor-wrapper .prose p:first-child,
+.markdown-editor-wrapper .prose h1:first-child,
+.markdown-editor-wrapper .prose h2:first-child,
+.markdown-editor-wrapper .prose h3:first-child,
+.markdown-editor-wrapper .prose h4:first-child,
+.markdown-editor-wrapper .prose h5:first-child,
+.markdown-editor-wrapper .prose h6:first-child {
+  margin-top: 0;
+}
+
+/* Code block styling */
+.prose pre {
+  @apply bg-muted rounded-lg p-4 overflow-x-auto;
+}
+
+.prose code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0;
+}
+
+/* Table styling */
+.prose table {
+  @apply w-full border-collapse;
+}
+
+.prose th {
+  @apply bg-muted font-semibold text-left;
+}
+
+.prose th,
+.prose td {
+  @apply border border-border px-3 py-2;
+}
+
+/* Blockquote styling */
+.prose blockquote {
+  @apply border-l-4 border-primary pl-4 italic;
+}
+
+/* Focus mode styles */
+.focus-mode .markdown-editor-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.focus-mode aside {
+  @apply hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Typo highlight for AI correction */
+.typo-highlight {
+  @apply bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-500;
+  cursor: pointer;
+}
+
+.typo-suggestion-popup {
+  @apply absolute bg-popover border border-border rounded-lg shadow-lg p-2 z-50;
+}
+
+.typo-suggestion-item {
+  @apply px-3 py-1.5 rounded cursor-pointer hover:bg-accent text-sm;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-10px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-fade-in,
+  .animate-slide-in {
+    animation: none;
+  }
+}

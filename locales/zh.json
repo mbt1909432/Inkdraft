@@ -1,0 +1,74 @@
+{
+  "common": {
+    "brand": "墨稿 · Inkdraft",
+    "tagline": "用 AI 写好每一稿",
+    "taglineEn": "Draft better with AI.",
+    "back": "返回",
+    "logout": "退出"
+  },
+  "home": {
+    "hero": {
+      "title": "墨稿 · Inkdraft",
+      "tagline": "用 AI 写好每一稿",
+      "taglineEn": "Draft better with AI.",
+      "intro": "所见即所得 Markdown 编辑器，内置 AI 编辑助手。对话改稿、逐条确认、自动重试，让每一稿都更顺手。"
+    },
+    "loginGithub": "使用 GitHub 登录",
+    "loginEmail": "使用邮箱登录",
+    "features": {
+      "title": "为什么用墨稿",
+      "wysiwyg": {
+        "title": "所见即所得",
+        "description": "Typora 风格编辑，写 Markdown 像写文档，实时渲染标题、列表、代码块。"
+      },
+      "aiAssistant": {
+        "title": "AI 编辑助手",
+        "description": "侧边对话改稿，选中即改。支持多处替换、插入，一次可调用多个编辑。"
+      },
+      "perEdit": {
+        "title": "逐条确认",
+        "description": "每条 AI 建议都可单独「应用」或「不应用」，改多少你说了算。"
+      },
+      "retry": {
+        "title": "多轮重试",
+        "description": "若某处未匹配，自动把当前文档与错误反馈给 AI 重试，直到改完或达到上限。"
+      }
+    },
+    "cta": {
+      "title": "开始写你的第一稿",
+      "desc": "登录后即可创建文档，支持云端同步、多设备编辑与自动保存。"
+    },
+    "footer": {
+      "sync": "云端同步 · 多设备支持 · 自动保存",
+      "brand": "墨稿 · Inkdraft — 用 AI 写好每一稿",
+      "author": "作者",
+      "github": "GitHub",
+      "xiaohongshu": "小红书"
+    }
+  },
+  "documents": {
+    "welcome": "欢迎使用墨稿",
+    "welcomeDesc": "用 AI 写好每一稿。所见即所得编辑，云端同步与 AI 编辑助手",
+    "createDocument": "创建新文档"
+  },
+  "auth": {
+    "login": "登录",
+    "signUp": "注册",
+    "loginTitle": "登录您的账户继续使用",
+    "signUpTitle": "创建新账户开始使用",
+    "githubLogin": "使用 GitHub 登录",
+    "githubSignUp": "使用 GitHub 注册",
+    "or": "或",
+    "email": "邮箱",
+    "password": "密码",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••",
+    "submitLogin": "登录",
+    "submitSignUp": "注册",
+    "processing": "处理中...",
+    "noAccount": "还没有账户？",
+    "hasAccount": "已有账户？",
+    "signUpSuccess": "注册邮件已发送，请查收邮箱完成验证",
+    "authFailed": "操作失败"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "common": {
+    "brand": "墨稿 · Inkdraft",
+    "tagline": "Draft better with AI.",
+    "taglineEn": "Draft better with AI.",
+    "back": "Back",
+    "logout": "Log out"
+  },
+  "home": {
+    "hero": {
+      "title": "墨稿 · Inkdraft",
+      "tagline": "Draft better with AI.",
+      "taglineEn": "Draft better with AI.",
+      "intro": "WYSIWYG Markdown editor with a built-in AI editing assistant. Edit in chat, confirm each change, auto-retry on mismatch—so every draft gets better."
+    },
+    "loginGithub": "Sign in with GitHub",
+    "loginEmail": "Sign in with Email",
+    "features": {
+      "title": "Why Inkdraft",
+      "wysiwyg": {
+        "title": "WYSIWYG",
+        "description": "Typora-style editing: write Markdown like a doc, with live headings, lists, and code blocks."
+      },
+      "aiAssistant": {
+        "title": "AI editing assistant",
+        "description": "Side-panel chat for edits. Select text and refine. Multiple search/replace and insert in one go."
+      },
+      "perEdit": {
+        "title": "Confirm per edit",
+        "description": "Apply or skip each AI suggestion. You decide what changes stay."
+      },
+      "retry": {
+        "title": "Auto-retry",
+        "description": "On mismatch, the current doc and error are sent back to the AI until edits succeed or the retry limit is reached."
+      }
+    },
+    "cta": {
+      "title": "Start your first draft",
+      "desc": "Sign in to create documents with cloud sync, multi-device editing, and auto-save."
+    },
+    "footer": {
+      "sync": "Cloud sync · Multi-device · Auto-save",
+      "brand": "墨稿 · Inkdraft — Draft better with AI.",
+      "author": "Author",
+      "github": "GitHub",
+      "xiaohongshu": "Xiaohongshu"
+    }
+  },
+  "documents": {
+    "welcome": "Welcome to Inkdraft",
+    "welcomeDesc": "Draft better with AI. WYSIWYG editing, cloud sync, and AI assistant.",
+    "createDocument": "Create document"
+  },
+  "auth": {
+    "login": "Sign in",
+    "signUp": "Sign up",
+    "loginTitle": "Sign in to your account to continue",
+    "signUpTitle": "Create an account to get started",
+    "githubLogin": "Sign in with GitHub",
+    "githubSignUp": "Sign up with GitHub",
+    "or": "or",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••",
+    "submitLogin": "Sign in",
+    "submitSignUp": "Sign up",
+    "processing": "Processing...",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signUpSuccess": "Verification email sent. Check your inbox to complete sign up.",
+    "authFailed": "Something went wrong"
+  }
+}
