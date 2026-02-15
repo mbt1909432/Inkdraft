@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Noto_Serif_SC } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { LocaleProvider } from "@/contexts/LocaleContext";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -44,6 +45,7 @@ export default function RootLayout({
         >
           <LocaleProvider>
             {children}
+            <Toaster position="bottom-center" richColors closeButton />
           </LocaleProvider>
         </ThemeProvider>
       </body>

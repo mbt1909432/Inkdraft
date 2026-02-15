@@ -18,6 +18,7 @@ import {
   Trash2,
   Edit2,
   Pin,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -134,12 +135,17 @@ export function Sidebar({
         {/* Search */}
         <div className="p-3">
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <label htmlFor="document-search" className="sr-only">
+              {t('sidebar.searchDocuments')}
+            </label>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden />
             <Input
+              id="document-search"
               placeholder={t('sidebar.searchDocuments')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
+              className="pl-9"
+              type="search"
             />
           </div>
         </div>
@@ -152,26 +158,37 @@ export function Sidebar({
             className="flex-1"
             onClick={handleCreateDocument}
             disabled={isCreating}
+            aria-busy={isCreating}
           >
-            <Plus className="h-4 w-4 mr-1" />
-            {t('sidebar.newDoc')}
+            {isCreating ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4 mr-1" />
+            )}
+            {isCreating ? '...' : t('sidebar.newDoc')}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleCreateFolder}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCreateFolder}
+            aria-label={t('sidebar.newFolder')}
+          >
             <FolderPlus className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3">
+        <nav className="flex-1 overflow-y-auto px-3" aria-label={t('sidebar.allDocuments')}>
           {/* All documents */}
           <button
             onClick={() => setActiveFolderId(null)}
             className={cn(
-              'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent',
+              'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors cursor-pointer',
               activeFolderId === null && 'bg-accent'
             )}
+            aria-pressed={activeFolderId === null}
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4" aria-hidden />
             <span>{t('sidebar.allDocuments')}</span>
             <span className="ml-auto text-xs text-muted-foreground">
               {documents.length}
@@ -260,15 +277,20 @@ function FolderItem({
     <div>
       <div
         className={cn(
-          'flex items-center gap-1 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer',
+          'flex items-center gap-1 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors',
           activeFolderId === folder.id && 'bg-accent'
         )}
       >
-        <button onClick={() => setIsOpen(!isOpen)} className="p-0.5">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-1.5 rounded hover:bg-accent/50 min-h-[36px] min-w-[36px] flex items-center justify-center"
+          aria-label={isOpen ? t('sidebar.collapseFolder') : t('sidebar.expandFolder')}
+          aria-expanded={isOpen}
+        >
           {isOpen ? (
-            <FolderOpen className="h-4 w-4" />
+            <FolderOpen className="h-4 w-4" aria-hidden />
           ) : (
-            <Folder className="h-4 w-4" />
+            <Folder className="h-4 w-4" aria-hidden />
           )}
         </button>
 

@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { downloadAsWord } from '@/lib/export/markdown-to-docx';
 import { downloadAsPdf } from '@/lib/export/markdown-to-pdf';
+import { toast } from 'sonner';
 
 interface EditorToolbarProps {
   onSave?: () => Promise<void>;
@@ -99,14 +100,14 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(data?.error ?? t('editor.draftFailed'));
+        toast.error(data?.error ?? t('editor.draftFailed'));
         return;
       }
       if (data.markdown) {
         setDraftResult(data.markdown);
       }
     } catch (e) {
-      alert(e instanceof Error ? e.message : t('editor.draftFailed'));
+      toast.error(e instanceof Error ? e.message : t('editor.draftFailed'));
     } finally {
       setIsDrafting(false);
     }
@@ -268,9 +269,11 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             <DropdownMenuItem
               onClick={() => {
                 if (currentDocument) {
-                  downloadAsWord(currentDocument.content ?? '', currentDocument.title).catch((e) =>
-                    alert(e instanceof Error ? e.message : t('editor.exportWordFailed'))
-                  );
+                  downloadAsWord(currentDocument.content ?? '', currentDocument.title)
+                    .then(() => toast.success(t('editor.exportWordSuccess')))
+                    .catch((e) =>
+                      toast.error(e instanceof Error ? e.message : t('editor.exportWordFailed'))
+                    );
                 }
               }}
             >
@@ -280,9 +283,11 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             <DropdownMenuItem
               onClick={() => {
                 if (currentDocument) {
-                  downloadAsPdf(currentDocument.content ?? '', currentDocument.title).catch((e) =>
-                    alert(e instanceof Error ? e.message : t('editor.exportPdfFailed'))
-                  );
+                  downloadAsPdf(currentDocument.content ?? '', currentDocument.title)
+                    .then(() => toast.success(t('editor.exportPdfSuccess')))
+                    .catch((e) =>
+                      toast.error(e instanceof Error ? e.message : t('editor.exportPdfFailed'))
+                    );
                 }
               }}
             >

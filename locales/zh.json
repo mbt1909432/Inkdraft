@@ -77,6 +77,8 @@
     "pdfDoc": "PDF 文档 (.pdf)",
     "exportWordFailed": "导出 Word 失败",
     "exportPdfFailed": "导出 PDF 失败",
+    "exportWordSuccess": "Word 文档已下载",
+    "exportPdfSuccess": "PDF 文档已下载",
     "logOut": "退出登录",
     "draftModal": {
       "compareAndChoose": "对比并选择",
@@ -100,8 +102,11 @@
   "sidebar": {
     "searchDocuments": "搜索文档…",
     "newDoc": "新建文档",
+    "newFolder": "新建文件夹",
     "allDocuments": "全部文档",
-    "noDocumentsYet": "暂无文档"
+    "noDocumentsYet": "暂无文档",
+    "expandFolder": "展开文件夹",
+    "collapseFolder": "折叠文件夹"
   },
   "documentList": {
     "rename": "重命名",

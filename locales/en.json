@@ -77,6 +77,8 @@
     "pdfDoc": "PDF (.pdf)",
     "exportWordFailed": "Export to Word failed",
     "exportPdfFailed": "Export to PDF failed",
+    "exportWordSuccess": "Word document downloaded",
+    "exportPdfSuccess": "PDF document downloaded",
     "logOut": "Log out",
     "draftModal": {
       "compareAndChoose": "Compare and choose",
@@ -100,8 +102,11 @@
   "sidebar": {
     "searchDocuments": "Search documents…",
     "newDoc": "New Doc",
+    "newFolder": "New Folder",
     "allDocuments": "All Documents",
-    "noDocumentsYet": "No documents yet"
+    "noDocumentsYet": "No documents yet",
+    "expandFolder": "Expand folder",
+    "collapseFolder": "Collapse folder"
   },
   "documentList": {
     "rename": "Rename",
