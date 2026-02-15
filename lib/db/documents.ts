@@ -37,9 +37,10 @@ export async function getDocument(id: string): Promise<Document | null> {
 
   if (error) {
     if (error.code === 'PGRST116') {
-      return null; // Document not found
+      return null; // Document not found (no row or RLS)
     }
-    console.error('Error fetching document:', error);
+    // Log full error for debugging (e.g. session/RLS on production)
+    console.error('Error fetching document:', { id, code: error.code, message: error.message });
     throw error;
   }
 

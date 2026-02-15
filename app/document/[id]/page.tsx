@@ -83,10 +83,23 @@ export default function DocumentPage() {
   // Load document
   useEffect(() => {
     const init = async () => {
+      const debug =
+        typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('debug') === '1';
+
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
+      if (debug) {
+        console.log('[document] init', {
+          documentId,
+          hasUser: !!user,
+          userId: user?.id?.slice(0, 8),
+          origin: typeof window !== 'undefined' ? window.location.origin : '',
+        });
+      }
 
       if (!user) {
         router.push('/login');
@@ -94,16 +107,31 @@ export default function DocumentPage() {
       }
 
       try {
-        // Parallel data fetching - avoid waterfalls
-        const [, , doc] = await Promise.all([
+        const [docs, , doc] = await Promise.all([
           loadDocuments(),
           loadFolders(),
           loadDocument(documentId),
         ]);
+
+        if (debug) {
+          console.log('[document] load result', {
+            documentId,
+            docFound: !!doc,
+            documentsCount: docs?.length ?? 0,
+            documentIds: docs?.map((d) => d.id)?.slice(0, 5),
+          });
+        }
+
         if (!doc) {
+          // Stale link or no access: redirect to list if we have other docs or none
+          if (!docs?.length || !docs.some((d) => d.id === documentId)) {
+            router.replace('/documents');
+            return;
+          }
           setNotFound(true);
         }
       } catch (error) {
+        if (debug) console.error('[document] load error', error);
         console.error('Error loading document:', error);
         setNotFound(true);
       } finally {
