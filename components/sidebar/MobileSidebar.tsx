@@ -9,7 +9,7 @@ import { useMobileStore } from '@/lib/store/mobile-store';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface MobileSidebarProps {
-  onCreateDocument?: (folderId?: string | null) => Promise<void>;
+  onCreateDocument?: (folderId?: string | null, template?: { name: string; content: string }) => Promise<void>;
   onCreateFolder?: (parentId?: string | null) => Promise<void>;
   onDeleteDocument?: (id: string) => Promise<void>;
   onDeleteFolder?: (id: string) => Promise<void>;

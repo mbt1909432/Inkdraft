@@ -19,19 +19,23 @@ import {
   Edit2,
   Pin,
   Loader2,
+  FileStack,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DocumentList } from './DocumentList';
+import { TemplatePicker } from '@/components/templates/TemplatePicker';
 import type { Document, Folder as FolderType } from '@/lib/types';
+import type { DocumentTemplate } from '@/lib/templates';
 
 interface SidebarProps {
-  onCreateDocument?: (folderId?: string | null) => Promise<void>;
+  onCreateDocument?: (folderId?: string | null, template?: { name: string; content: string }) => Promise<void>;
   onCreateFolder?: (parentId?: string | null) => Promise<void>;
   onDeleteDocument?: (id: string) => Promise<void>;
   onDeleteFolder?: (id: string) => Promise<void>;
@@ -62,6 +66,7 @@ export function Sidebar({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
 
   // Derive filtered documents during render, not in effect
   const filteredDocuments = useMemo(() => {
@@ -95,6 +100,17 @@ export function Sidebar({
       await onCreateFolder(activeFolderId);
     }
   }, [onCreateFolder, activeFolderId]);
+
+  const handleSelectTemplate = useCallback(async (template: DocumentTemplate) => {
+    if (onCreateDocument) {
+      setIsCreating(true);
+      try {
+        await onCreateDocument(activeFolderId, { name: template.nameZh, content: template.content });
+      } finally {
+        setIsCreating(false);
+      }
+    }
+  }, [onCreateDocument, activeFolderId]);
 
   const rootFolders = folders.filter((f) => !f.parent_folder_id);
   // All Documents：显示全部；选中某文件夹：只显示该文件夹内文档；搜索时：显示搜索结果
@@ -152,21 +168,34 @@ export function Sidebar({
 
         {/* Actions */}
         <div className="flex gap-2 px-3 pb-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={handleCreateDocument}
-            disabled={isCreating}
-            aria-busy={isCreating}
-          >
-            {isCreating ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4 mr-1" />
-            )}
-            {isCreating ? '...' : t('sidebar.newDoc')}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                disabled={isCreating}
+                aria-busy={isCreating}
+              >
+                {isCreating ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-1" />
+                )}
+                {isCreating ? '...' : t('sidebar.newDoc')}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem onClick={handleCreateDocument}>
+                <FileText className="h-4 w-4 mr-2" />
+                空白文档
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTemplatePickerOpen(true)}>
+                <FileStack className="h-4 w-4 mr-2" />
+                从模板创建
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"
@@ -176,6 +205,13 @@ export function Sidebar({
             <FolderPlus className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Template Picker */}
+        <TemplatePicker
+          open={templatePickerOpen}
+          onOpenChange={setTemplatePickerOpen}
+          onSelect={handleSelectTemplate}
+        />
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3" aria-label={t('sidebar.allDocuments')}>

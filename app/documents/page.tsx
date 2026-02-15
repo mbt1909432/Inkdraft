@@ -12,16 +12,26 @@ import { OutlineView } from '@/components/sidebar/OutlineView';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { Button } from '@/components/ui/button';
-import { LogOut, FileText } from 'lucide-react';
+import { LogOut, FileText, Plus, FileStack, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useDocumentStore } from '@/lib/store/document-store';
 import { ResizeHandle } from '@/components/ui/resize-handle';
 import { useTranslations } from '@/contexts/LocaleContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { TemplatePicker } from '@/components/templates/TemplatePicker';
+import type { DocumentTemplate } from '@/lib/templates';
 
 export default function EditorPage() {
   const t = useTranslations();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const { currentDocument, loadDocuments, loadDocument, createNewDocument, saveDocument, removeDocument, pinDocument, renameDocument } = useDocument();
   const { loadFolders, createNewFolder, renameFolder, removeFolder } = useFolder();
   const { sidebarOpen, outlineOpen, sidebarWidth, resizeSidebarBy } =
@@ -63,17 +73,29 @@ export default function EditorPage() {
     init();
   }, [loadDocuments, loadFolders, router]);
 
-  const handleCreateDocument = async (folderId?: string | null) => {
+  const handleCreateDocument = async (folderId?: string | null, template?: { name: string; content: string }) => {
+    setIsCreating(true);
     try {
-      console.log('[handleCreateDocument] Creating document...');
-      const doc = await createNewDocument(folderId);
+      console.log('[handleCreateDocument] Creating document...', template ? 'with template' : 'blank');
+      const doc = await createNewDocument(folderId, template ? { title: template.name, content: template.content } : undefined);
       console.log('[handleCreateDocument] Document created:', { id: doc.id, title: doc.title });
       console.log('[handleCreateDocument] Navigating to:', `/document/${doc.id}`);
       // Use window.location.href for a full page load to avoid client-side routing issues
       window.location.href = `/document/${doc.id}`;
     } catch (error) {
       console.error('Error creating document:', error);
+    } finally {
+      setIsCreating(false);
     }
+  };
+
+  const handleSelectTemplate = async (template: DocumentTemplate) => {
+    await handleCreateDocument(null, { name: template.nameZh, content: template.content });
+    setTemplatePickerOpen(false);
+  };
+
+  const handleBlankDocument = async () => {
+    await handleCreateDocument();
   };
 
   const handleCreateFolder = async (parentId?: string | null) => {
@@ -210,11 +232,39 @@ export default function EditorPage() {
             <p className="text-muted-foreground mb-6">
               {t('documents.welcomeDesc')}
             </p>
-            <Button onClick={() => handleCreateDocument()} size="lg">
-              {t('documents.createDocument')}
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="lg" disabled={isCreating}>
+                    {isCreating ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    {t('documents.createDocument')}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48">
+                  <DropdownMenuItem onClick={handleBlankDocument}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    空白文档
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTemplatePickerOpen(true)}>
+                    <FileStack className="h-4 w-4 mr-2" />
+                    从模板创建
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
+
+        {/* Template Picker */}
+        <TemplatePicker
+          open={templatePickerOpen}
+          onOpenChange={setTemplatePickerOpen}
+          onSelect={handleSelectTemplate}
+        />
       </main>
 
       {/* Outline view (hidden when no document) */}

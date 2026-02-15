@@ -65,12 +65,15 @@ export function useDocument() {
     }
   }, [setCurrentDocument, setHasUnsavedChanges]);
 
-  const createNewDocument = useCallback(async (folderId?: string | null) => {
-    const nextTitle = getNextUntitledTitle(documents);
+  const createNewDocument = useCallback(async (
+    folderId?: string | null,
+    options?: { title?: string; content?: string }
+  ) => {
+    const nextTitle = options?.title || getNextUntitledTitle(documents);
     try {
       const doc = await createDocument({
         title: nextTitle,
-        content: '',
+        content: options?.content || '',
         parent_folder_id: folderId,
       });
       addDocument(doc);
