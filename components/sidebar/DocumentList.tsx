@@ -121,7 +121,10 @@ function DocumentItem({
         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
         isActive && 'bg-accent font-medium'
       )}
-      onClick={isRenaming ? undefined : onSelect}
+      onClick={isRenaming ? undefined : () => {
+        console.log('[DocumentList] onClick triggered');
+        onSelect();
+      }}
       onKeyDown={(e) => !isRenaming && e.key === 'Enter' && onSelect()}
       aria-current={isActive ? 'page' : undefined}
     >

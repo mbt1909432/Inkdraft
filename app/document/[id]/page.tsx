@@ -89,63 +89,59 @@ export default function DocumentPage() {
   // Load document
   useEffect(() => {
     const init = async () => {
+      console.log('[document] useEffect triggered', { documentId });
+
       // Invalid id (e.g. placeholder %%drp:id:xxx%%) causes PostgreSQL 22P02; redirect early
       if (!isValidDocumentId(documentId)) {
+        console.log('[document] Invalid ID, redirecting to /documents');
         router.replace('/documents');
         setIsLoading(false);
         return;
       }
-
-      const debug =
-        typeof window !== 'undefined' &&
-        new URLSearchParams(window.location.search).get('debug') === '1';
 
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (debug) {
-        console.log('[document] init', {
-          documentId,
-          hasUser: !!user,
-          userId: user?.id?.slice(0, 8),
-          origin: typeof window !== 'undefined' ? window.location.origin : '',
-        });
-      }
+      console.log('[document] getUser result', {
+        documentId,
+        hasUser: !!user,
+        userId: user?.id?.slice(0, 8),
+      });
 
       if (!user) {
+        console.log('[document] No user, redirecting to /login');
         router.push('/login');
         return;
       }
 
       try {
+        console.log('[document] Loading data...');
         const [docs, , doc] = await Promise.all([
           loadDocuments(),
           loadFolders(),
           loadDocument(documentId),
         ]);
 
-        if (debug) {
-          console.log('[document] load result', {
-            documentId,
-            docFound: !!doc,
-            documentsCount: docs?.length ?? 0,
-            documentIds: docs?.map((d) => d.id)?.slice(0, 5),
-          });
-        }
+        console.log('[document] Load result', {
+          documentId,
+          docFound: !!doc,
+          documentsCount: docs?.length ?? 0,
+        });
 
         if (!doc) {
+          console.log('[document] Doc not found, checking docs list...');
           // Stale link or no access: redirect to list if we have other docs or none
           if (!docs?.length || !docs.some((d) => d.id === documentId)) {
+            console.log('[document] Redirecting to /documents');
             router.replace('/documents');
             return;
           }
           setNotFound(true);
         }
       } catch (error) {
-        if (debug) console.error('[document] load error', error);
-        console.error('Error loading document:', error);
+        console.error('[document] Load error:', error);
         setNotFound(true);
       } finally {
         setIsLoading(false);
@@ -153,7 +149,8 @@ export default function DocumentPage() {
     };
 
     init();
-  }, [documentId, loadDocuments, loadFolders, loadDocument, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentId]);
 
   const handleCreateDocument = async (folderId?: string | null) => {
     try {
