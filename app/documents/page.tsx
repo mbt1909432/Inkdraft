@@ -65,7 +65,10 @@ export default function EditorPage() {
 
   const handleCreateDocument = async (folderId?: string | null) => {
     try {
+      console.log('[handleCreateDocument] Creating document...');
       const doc = await createNewDocument(folderId);
+      console.log('[handleCreateDocument] Document created:', { id: doc.id, title: doc.title });
+      console.log('[handleCreateDocument] Navigating to:', `/document/${doc.id}`);
       router.push(`/document/${doc.id}`);
     } catch (error) {
       console.error('Error creating document:', error);

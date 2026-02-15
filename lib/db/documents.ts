@@ -68,6 +68,8 @@ export async function createDocument(doc: {
     throw new Error('User not authenticated');
   }
 
+  console.log('[createDocument] Creating document with user:', user.id?.slice(0, 8));
+
   const { data, error } = await supabase
     .from('documents')
     .insert({
@@ -83,6 +85,8 @@ export async function createDocument(doc: {
     console.error('Error creating document:', error);
     throw error;
   }
+
+  console.log('[createDocument] Created document:', { id: data?.id, title: data?.title });
 
   return data;
 }
