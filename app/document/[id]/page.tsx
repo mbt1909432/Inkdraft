@@ -29,6 +29,13 @@ export default function DocumentPage() {
   const params = useParams();
   const documentId = params.id as string;
   const router = useRouter();
+
+  // Debug: log the actual URL and params
+  console.log('[document] render', {
+    url: typeof window !== 'undefined' ? window.location.href : 'SSR',
+    paramsId: documentId,
+    isValidUUID: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(documentId),
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [saveToast, setSaveToast] = useState<SaveToastType>(null);
