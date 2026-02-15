@@ -56,7 +56,7 @@ export function DocumentList({
             onSelect={() => onSelectDocument?.(doc.id)}
             onDelete={() => onDeleteDocument?.(doc.id)}
             onTogglePin={() => onTogglePin?.(doc.id)}
-            onRename={(title) => onRenameDocument?.(doc.id, title)}
+            onRename={onRenameDocument ? (title) => onRenameDocument(doc.id, title) : undefined}
           />
         </li>
       ))}
