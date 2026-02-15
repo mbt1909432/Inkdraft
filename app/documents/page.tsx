@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDocument } from '@/hooks/useDocument';
 import { useFolder } from '@/hooks/useFolder';
@@ -26,6 +26,7 @@ export default function EditorPage() {
   const { loadFolders, createNewFolder, renameFolder, removeFolder } = useFolder();
   const { sidebarOpen, outlineOpen, sidebarWidth, resizeSidebarBy } =
     useDocumentStore();
+  const redirectingToLogin = useRef(false);
 
   // Auto-save hook
   useAutoSave({
@@ -33,7 +34,7 @@ export default function EditorPage() {
     enabled: true,
   });
 
-  // Initial data load
+  // Initial data load（无用户时 replace 到 login，避免 403 时 documents↔login 循环）
   useEffect(() => {
     const init = async () => {
       const supabase = createClient();
@@ -42,7 +43,11 @@ export default function EditorPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push('/login');
+        if (!redirectingToLogin.current) {
+          redirectingToLogin.current = true;
+          router.replace('/login');
+        }
+        setIsLoading(false);
         return;
       }
 

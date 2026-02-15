@@ -34,6 +34,8 @@
 
 改完 **Site URL / Redirect URLs / 环境变量** 后，清掉浏览器里该站点的 Cookie 再重新登录试一次。
 
+**若出现 /documents 与 /login 来回跳**：多半是 403 未解决 → `/documents` 拿不到 user 就跳到 `/login`，登录或回调又回到 `/documents`，再次 403 又跳 `/login`。应用已改为用 `router.replace('/login')` 并避免重复跳转；根本解决仍是修正 Site URL 并清 Cookie 后重新登录。
+
 ---
 
 ## 1. 确认 Supabase 生产环境回调地址
