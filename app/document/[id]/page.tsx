@@ -177,7 +177,8 @@ export default function DocumentPage() {
   const handleCreateDocument = async (folderId?: string | null) => {
     try {
       const doc = await createNewDocument(folderId);
-      router.push(`/document/${doc.id}`);
+      // Use window.location.href for a full page load to avoid client-side routing issues
+      window.location.href = `/document/${doc.id}`;
     } catch (error) {
       console.error('Error creating document:', error);
     }
@@ -195,7 +196,8 @@ export default function DocumentPage() {
   };
 
   const handleSelectDocument = (id: string) => {
-    router.push(`/document/${id}`);
+    // Use window.location.href for a full page load to avoid client-side routing issues
+    window.location.href = `/document/${id}`;
   };
 
   const handleDeleteDocument = async (id: string) => {

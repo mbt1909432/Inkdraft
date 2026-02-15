@@ -69,7 +69,8 @@ export default function EditorPage() {
       const doc = await createNewDocument(folderId);
       console.log('[handleCreateDocument] Document created:', { id: doc.id, title: doc.title });
       console.log('[handleCreateDocument] Navigating to:', `/document/${doc.id}`);
-      router.push(`/document/${doc.id}`);
+      // Use window.location.href for a full page load to avoid client-side routing issues
+      window.location.href = `/document/${doc.id}`;
     } catch (error) {
       console.error('Error creating document:', error);
     }
@@ -87,7 +88,8 @@ export default function EditorPage() {
   };
 
   const handleSelectDocument = (id: string) => {
-    router.push(`/document/${id}`);
+    // Use window.location.href for a full page load to avoid client-side routing issues
+    window.location.href = `/document/${id}`;
   };
 
   const handleDeleteDocument = async (id: string) => {
