@@ -6,18 +6,25 @@ import { useDocument } from '@/hooks/useDocument';
 import { useFolder } from '@/hooks/useFolder';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useSync } from '@/hooks/useSync';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 import { Sidebar } from '@/components/sidebar/Sidebar';
+import { MobileSidebar } from '@/components/sidebar/MobileSidebar';
 import { MarkdownEditor } from '@/components/editor/MarkdownEditor';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
+import { MobileToolbar } from '@/components/editor/MobileToolbar';
 import { OutlineView } from '@/components/sidebar/OutlineView';
+import { MobileOutline } from '@/components/sidebar/MobileOutline';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Button } from '@/components/ui/button';
 import { FileText, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useDocumentStore } from '@/lib/store/document-store';
+import { cn } from '@/lib/utils';
 import { ResizeHandle } from '@/components/ui/resize-handle';
 import { SaveToast, type SaveToastType } from '@/components/SaveToast';
 import { ChatPanel } from '@/components/chat/ChatPanel';
+import { MobileChat } from '@/components/chat/MobileChat';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 
 /** Supabase document id is UUID; reject placeholders like %%drp:id:xxx%% */
 function isValidDocumentId(id: string): boolean {
@@ -28,6 +35,7 @@ function isValidDocumentId(id: string): boolean {
 export default function DocumentPage() {
   const params = useParams();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   // WORKAROUND: useParams() is returning incorrect values in production.
   // Parse the document ID directly from the URL pathname instead.
@@ -287,12 +295,9 @@ export default function DocumentPage() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar column (width persisted, drag to resize) */}
-      <div
-        style={{ width: sidebarOpen ? sidebarWidth : 0 }}
-        className="flex shrink-0 overflow-hidden transition-[width] duration-200"
-      >
-        <Sidebar
+      {/* Mobile Sidebar (Sheet) */}
+      {isMobile && (
+        <MobileSidebar
           onCreateDocument={handleCreateDocument}
           onCreateFolder={handleCreateFolder}
           onDeleteDocument={handleDeleteDocument}
@@ -301,27 +306,65 @@ export default function DocumentPage() {
           onRenameDocument={handleRenameDocument}
           onSelectDocument={handleSelectDocument}
         />
-      </div>
-      {sidebarOpen && (
-        <ResizeHandle onResize={resizeSidebarBy} direction="right" />
       )}
 
-      {/* Main content（min-w-0 + overflow-hidden 避免与右侧 Outline 重叠） */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <EditorToolbar
-          onSave={handleSave}
-          onTogglePin={handleTogglePin}
-          onLogout={handleLogout}
-          onDraft={(markdown) => updateCurrentContent(markdown)}
-          onOpenChat={() => setChatOpen((v) => !v)}
-        />
+      {/* Desktop Sidebar column (width persisted, drag to resize) */}
+      {!isMobile && (
+        <>
+          <div
+            style={{ width: sidebarOpen ? sidebarWidth : 0 }}
+            className="flex shrink-0 overflow-hidden transition-[width] duration-200"
+          >
+            <Sidebar
+              onCreateDocument={handleCreateDocument}
+              onCreateFolder={handleCreateFolder}
+              onDeleteDocument={handleDeleteDocument}
+              onDeleteFolder={handleDeleteFolder}
+              onRenameFolder={handleRenameFolder}
+              onRenameDocument={handleRenameDocument}
+              onSelectDocument={handleSelectDocument}
+            />
+          </div>
+          {sidebarOpen && (
+            <ResizeHandle onResize={resizeSidebarBy} direction="right" />
+          )}
+        </>
+      )}
+
+      {/* Main content */}
+      <main className={cn(
+        "flex-1 flex flex-col min-w-0 overflow-hidden",
+        isMobile && "pb-14" // Space for bottom nav
+      )}>
+        {/* Desktop Toolbar */}
+        {!isMobile && (
+          <EditorToolbar
+            onSave={handleSave}
+            onTogglePin={handleTogglePin}
+            onLogout={handleLogout}
+            onDraft={(markdown) => updateCurrentContent(markdown)}
+            onOpenChat={() => setChatOpen((v) => !v)}
+          />
+        )}
+
+        {/* Mobile Toolbar */}
+        {isMobile && (
+          <MobileToolbar
+            onSave={handleSave}
+            onTogglePin={handleTogglePin}
+            onLogout={handleLogout}
+            onDraft={(markdown) => updateCurrentContent(markdown)}
+            onOpenChat={() => setChatOpen((v) => !v)}
+          />
+        )}
+
         <div className="flex-1 overflow-auto">
           <MarkdownEditor className="h-full" />
         </div>
       </main>
 
-      {/* Outline column（z-10 避免被主内容遮挡） */}
-      {outlineOpen && (
+      {/* Desktop Outline column */}
+      {!isMobile && outlineOpen && (
         <>
           <ResizeHandle onResize={resizeOutlineBy} direction="right" />
           <div
@@ -333,8 +376,8 @@ export default function DocumentPage() {
         </>
       )}
 
-      {/* AI 编辑助手面板（可拖拽调整宽度） */}
-      {chatOpen && (
+      {/* Desktop AI Chat Panel */}
+      {!isMobile && chatOpen && (
         <>
           <ResizeHandle onResize={resizeChatPanelBy} direction="right" />
           <div
@@ -351,7 +394,25 @@ export default function DocumentPage() {
         </>
       )}
 
-      {/* 保存状态提示（自动保存 / 手动保存） */}
+      {/* Mobile AI Chat (Dialog) */}
+      {isMobile && (
+        <MobileChat
+          getMarkdown={() => currentDocument?.content ?? ''}
+          setMarkdown={updateCurrentContent}
+        />
+      )}
+
+      {/* Mobile Outline (Bottom Sheet) */}
+      {isMobile && <MobileOutline />}
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <MobileBottomNav
+          onDraft={() => {/* TODO: trigger draft modal */}}
+        />
+      )}
+
+      {/* 保存状态提示 */}
       <SaveToast type={saveToast} />
     </div>
   );

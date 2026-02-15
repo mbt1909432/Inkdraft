@@ -581,3 +581,81 @@
     animation: none;
   }
 }
+
+/* ========================================
+   Mobile Responsive Styles
+   ======================================== */
+
+/* Safe area padding for mobile devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Mobile-specific editor adjustments */
+@media (max-width: 767px) {
+  /* Editor wrapper adjustments */
+  .markdown-editor-wrapper {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Smaller font sizes on mobile */
+  .markdown-editor-wrapper .prose p {
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .markdown-editor-wrapper .prose h1 {
+    font-size: 1.75em !important;
+  }
+
+  .markdown-editor-wrapper .prose h2 {
+    font-size: 1.5em !important;
+  }
+
+  .markdown-editor-wrapper .prose h3 {
+    font-size: 1.25em !important;
+  }
+
+  /* Toolbar adjustments */
+  .markdown-editor-wrapper [data-editor-type="toolbar"] {
+    padding: 4px 6px !important;
+    gap: 1px !important;
+  }
+
+  .markdown-editor-wrapper [data-editor-type="toolbar"] button {
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+}
+
+/* Touch optimization */
+@media (pointer: coarse) {
+  /* Increase touch targets */
+  .markdown-editor-wrapper [data-editor-type="toolbar"] button,
+  .markdown-editor-wrapper [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent double-tap zoom */
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+/* Hide desktop-only elements on mobile */
+@media (max-width: 767px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Show mobile-only elements */
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
