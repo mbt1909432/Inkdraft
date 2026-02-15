@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from '@/contexts/LocaleContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import { LocaleSwitcher } from '@/components/locale-switcher';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +49,7 @@ interface EditorToolbarProps {
 }
 
 export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenChat }: EditorToolbarProps) {
+  const t = useTranslations();
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
@@ -96,14 +99,14 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(data?.error ?? 'Draft failed');
+        alert(data?.error ?? t('editor.draftFailed'));
         return;
       }
       if (data.markdown) {
         setDraftResult(data.markdown);
       }
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Draft request failed');
+      alert(e instanceof Error ? e.message : t('editor.draftFailed'));
     } finally {
       setIsDrafting(false);
     }
@@ -133,14 +136,14 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
   const getSyncText = () => {
     switch (syncStatus) {
       case 'syncing':
-        return 'Syncing...';
+        return t('editor.syncing');
       case 'offline':
-        return 'Offline';
+        return t('editor.offline');
       case 'error':
-        return 'Sync error';
+        return t('editor.syncError');
       case 'synced':
       default:
-        return hasUnsavedChanges ? 'Unsaved changes' : 'Saved';
+        return hasUnsavedChanges ? t('editor.unsavedChanges') : t('editor.saved');
     }
   };
 
@@ -151,9 +154,9 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
     <div className="grid grid-cols-[1fr_auto] gap-3 min-w-0 px-4 py-2 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 items-center">
       <div className="flex items-center gap-2 min-w-0 overflow-hidden">
         <Button variant="ghost" size="sm" asChild className="shrink-0">
-          <Link href="/documents" aria-label="返回文档列表">
+          <Link href="/documents" aria-label={t('editor.docList')}>
             <LayoutDashboard className="h-4 w-4 sm:mr-1" />
-            <span className="hidden sm:inline">文档</span>
+            <span className="hidden sm:inline">{t('editor.docList')}</span>
           </Link>
         </Button>
         <h1 className="text-lg font-semibold truncate min-w-0">
@@ -177,7 +180,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
           size="sm"
           onClick={toggleOutline}
           className={cn(outlineOpen ? 'bg-accent' : '')}
-          aria-label={outlineOpen ? 'Hide outline' : 'Show outline'}
+          aria-label={outlineOpen ? t('editor.hideOutline') : t('editor.showOutline')}
           aria-pressed={outlineOpen}
         >
           {outlineOpen ? (
@@ -185,7 +188,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
           ) : (
             <Eye className="h-4 w-4" />
           )}
-          <span className="ml-1 hidden sm:inline">Outline</span>
+          <span className="ml-1 hidden sm:inline">{t('editor.outline')}</span>
         </Button>
 
         {/* Pin/Unpin */}
@@ -193,17 +196,17 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
           variant="ghost"
           size="sm"
           onClick={onTogglePin}
-          aria-label={currentDocument.is_pinned ? 'Unpin document' : 'Pin document'}
+          aria-label={currentDocument.is_pinned ? t('editor.unpinDocument') : t('editor.pinDocument')}
         >
           {currentDocument.is_pinned ? (
             <>
               <PinOff className="h-4 w-4" />
-              <span className="ml-1 hidden sm:inline">Unpin</span>
+              <span className="ml-1 hidden sm:inline">{t('editor.unpin')}</span>
             </>
           ) : (
             <>
               <Pin className="h-4 w-4" />
-              <span className="ml-1 hidden sm:inline">Pin</span>
+              <span className="ml-1 hidden sm:inline">{t('editor.pin')}</span>
             </>
           )}
         </Button>
@@ -215,24 +218,24 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             size="sm"
             onClick={openDraftDialog}
             disabled={isDrafting}
-            aria-label="起稿"
+            aria-label={t('editor.draft')}
             aria-busy={isDrafting}
           >
             <Sparkles className="h-4 w-4" />
-            <span className="ml-1 hidden sm:inline">起稿</span>
+            <span className="ml-1 hidden sm:inline">{t('editor.draft')}</span>
           </Button>
         )}
 
-        {/* AI 编辑助手 */}
+        {/* AI Assistant */}
         {onOpenChat && (
           <Button
             variant="outline"
             size="sm"
             onClick={onOpenChat}
-            aria-label="AI 编辑助手"
+            aria-label={t('editor.aiAssistant')}
           >
             <MessageSquare className="h-4 w-4" />
-            <span className="ml-1 hidden sm:inline">AI 助手</span>
+            <span className="ml-1 hidden sm:inline">{t('editor.aiAssistant')}</span>
           </Button>
         )}
 
@@ -242,7 +245,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
           size="sm"
           onClick={onSave}
           disabled={isSaving || !hasUnsavedChanges}
-          aria-label="Save document"
+          aria-label={t('editor.saveDocument')}
           aria-busy={isSaving}
         >
           {isSaving ? (
@@ -250,15 +253,15 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
           ) : (
             <Save className="h-4 w-4" />
           )}
-          <span className="ml-1 hidden sm:inline">Save</span>
+          <span className="ml-1 hidden sm:inline">{t('editor.save')}</span>
         </Button>
 
-        {/* 下载：Word / PDF */}
+        {/* Download: Word / PDF */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" aria-label="下载文档">
+            <Button variant="outline" size="sm" aria-label={t('editor.downloadDocument')}>
               <Download className="h-4 w-4" />
-              <span className="ml-1 hidden sm:inline">下载</span>
+              <span className="ml-1 hidden sm:inline">{t('editor.download')}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -266,30 +269,31 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
               onClick={() => {
                 if (currentDocument) {
                   downloadAsWord(currentDocument.content ?? '', currentDocument.title).catch((e) =>
-                    alert(e instanceof Error ? e.message : '导出 Word 失败')
+                    alert(e instanceof Error ? e.message : t('editor.exportWordFailed'))
                   );
                 }
               }}
             >
               <FileType className="h-4 w-4" />
-              Word 文档 (.docx)
+              {t('editor.wordDoc')}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 if (currentDocument) {
                   downloadAsPdf(currentDocument.content ?? '', currentDocument.title).catch((e) =>
-                    alert(e instanceof Error ? e.message : '导出 PDF 失败')
+                    alert(e instanceof Error ? e.message : t('editor.exportPdfFailed'))
                   );
                 }
               }}
             >
               <FileText className="h-4 w-4" />
-              PDF 文档 (.pdf)
+              {t('editor.pdfDoc')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <ThemeSwitcher />
+        <LocaleSwitcher />
         {onLogout && (
           <>
             <span className="w-px h-5 bg-border hidden sm:block" aria-hidden />
@@ -297,11 +301,11 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
               variant="outline"
               size="sm"
               onClick={onLogout}
-              aria-label="Log out"
+              aria-label={t('editor.logOut')}
               className="border-muted-foreground/30"
             >
               <LogOut className="h-4 w-4" />
-              <span className="ml-1.5">Log out</span>
+              <span className="ml-1.5">{t('editor.logOut')}</span>
             </Button>
           </>
         )}
@@ -327,14 +331,14 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
         >
           <div className="flex items-center justify-between shrink-0">
             <h2 id="draft-dialog-title" className="text-lg font-semibold">
-              {draftResult !== null ? '对比并选择' : '起稿'}
+              {draftResult !== null ? t('editor.draftModal.compareAndChoose') : t('editor.draftModal.draft')}
             </h2>
             <Button
               variant="ghost"
               size="icon"
               onClick={closeDraftDialog}
               disabled={isDrafting}
-              aria-label="关闭"
+              aria-label={t('editor.draftModal.close')}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -344,25 +348,25 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             /* 步骤一：填写标题与说明 */
             <>
               <p className="text-sm text-muted-foreground shrink-0">
-                描述你希望生成的内容，AI 将根据标题和说明起稿。
+                {t('editor.draftModal.description')}
               </p>
               <div className="grid gap-2 shrink-0">
-                <Label htmlFor="draft-title">标题</Label>
+                <Label htmlFor="draft-title">{t('editor.draftModal.title')}</Label>
                 <Input
                   id="draft-title"
                   value={draftTitle}
                   onChange={(e) => setDraftTitle(e.target.value)}
-                  placeholder="文档标题"
+                  placeholder={t('editor.draftModal.docTitle')}
                   disabled={isDrafting}
                 />
               </div>
               <div className="grid gap-2 shrink-0">
-                <Label htmlFor="draft-instruction">补充说明（可选）</Label>
+                <Label htmlFor="draft-instruction">{t('editor.draftModal.instruction')}</Label>
                 <textarea
                   id="draft-instruction"
                   value={draftInstruction}
                   onChange={(e) => setDraftInstruction(e.target.value)}
-                  placeholder="例如：写一篇技术博客大纲、会议纪要结构…"
+                  placeholder={t('editor.draftModal.instructionPlaceholder')}
                   disabled={isDrafting}
                   rows={3}
                   className={cn(
@@ -374,7 +378,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
               </div>
               <div className="flex justify-end gap-2 pt-2 shrink-0">
                 <Button variant="outline" onClick={closeDraftDialog} disabled={isDrafting}>
-                  取消
+                  {t('editor.draftModal.cancel')}
                 </Button>
                 <Button
                   onClick={handleDraftSubmit}
@@ -384,10 +388,10 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
                   {isDrafting ? (
                     <>
                       <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
-                      生成中…
+                      {t('editor.draftModal.generating')}
                     </>
                   ) : (
-                    '起稿'
+                    t('editor.draftModal.draft')
                   )}
                 </Button>
               </div>
@@ -396,11 +400,11 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             /* 步骤二：当前文档 vs 起稿结果，选择接受或放弃 */
             <>
               <p className="text-sm text-muted-foreground shrink-0">
-                请对比当前文档与起稿结果，选择「接受并替换」或「放弃」。
+                {t('editor.draftModal.compareHint')}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
                 <div className="flex flex-col gap-2 min-h-0">
-                  <Label className="text-muted-foreground font-medium">当前文档</Label>
+                  <Label className="text-muted-foreground font-medium">{t('editor.draftModal.currentDoc')}</Label>
                   <textarea
                     readOnly
                     value={currentDocument?.content ?? ''}
@@ -411,7 +415,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
                   />
                 </div>
                 <div className="flex flex-col gap-2 min-h-0">
-                  <Label className="text-muted-foreground font-medium">起稿结果</Label>
+                  <Label className="text-muted-foreground font-medium">{t('editor.draftModal.draftResult')}</Label>
                   <textarea
                     readOnly
                     value={draftResult}
@@ -424,10 +428,10 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
               </div>
               <div className="flex justify-end gap-2 pt-2 shrink-0">
                 <Button variant="outline" onClick={closeDraftDialog}>
-                  放弃
+                  {t('editor.draftModal.discard')}
                 </Button>
                 <Button onClick={handleAcceptDraft}>
-                  接受并替换
+                  {t('editor.draftModal.acceptAndReplace')}
                 </Button>
               </div>
             </>

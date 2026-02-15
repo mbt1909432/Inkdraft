@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from '@/contexts/LocaleContext';
 import { useDocumentStore } from '@/lib/store/document-store';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronDown } from 'lucide-react';
@@ -38,6 +39,7 @@ function isUnderCollapsed(items: OutlineItem[], index: number, collapsedIds: Set
 }
 
 export function OutlineView({ className }: OutlineViewProps) {
+  const t = useTranslations();
   const { outline, outlineOpen } = useDocumentStore();
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
 
@@ -73,7 +75,7 @@ export function OutlineView({ className }: OutlineViewProps) {
       )}
     >
       <h3 className="font-semibold text-sm mb-3 text-muted-foreground uppercase tracking-wide">
-        Outline
+        {t('editor.outline')}
       </h3>
       <nav>
         <ul className="space-y-1">
@@ -86,7 +88,7 @@ export function OutlineView({ className }: OutlineViewProps) {
                 <div className="flex items-center gap-0.5 min-w-0">
                   <button
                     type="button"
-                    aria-label={isCollapsed ? '展开' : '折叠'}
+                    aria-label={isCollapsed ? t('editor.outlineExpand') : t('editor.outlineCollapse')}
                     className={cn(
                       'shrink-0 p-0.5 rounded hover:bg-accent',
                       !hasChild && 'invisible'

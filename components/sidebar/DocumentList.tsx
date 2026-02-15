@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from '@/contexts/LocaleContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,7 @@ export function DocumentList({
   onTogglePin,
   onRenameDocument,
 }: DocumentListProps) {
+  const t = useTranslations();
   // Filter out documents with invalid IDs (e.g., placeholders like %%drp:id:xxx%%)
   const validDocuments = useMemo(
     () => documents.filter((doc) => isValidDocumentId(doc.id)),
@@ -58,7 +60,7 @@ export function DocumentList({
   if (sortedDocuments.length === 0) {
     return (
       <div className="text-sm text-muted-foreground text-center py-4">
-        No documents yet
+        {t('sidebar.noDocumentsYet')}
       </div>
     );
   }
@@ -98,6 +100,7 @@ function DocumentItem({
   onTogglePin,
   onRename,
 }: DocumentItemProps) {
+  const t = useTranslations();
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(document.title);
   useEffect(() => {
@@ -111,11 +114,11 @@ function DocumentItem({
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-      return 'Today';
+      return t('documentList.today');
     } else if (diffDays === 1) {
-      return 'Yesterday';
+      return t('documentList.yesterday');
     } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
+      return `${diffDays} ${t('documentList.daysAgo')}`;
     } else {
       return date.toLocaleDateString();
     }
@@ -197,19 +200,19 @@ function DocumentItem({
             {onRename && (
               <DropdownMenuItem onClick={() => setIsRenaming(true)}>
                 <Edit2 className="h-4 w-4 mr-2" />
-                重命名
+                {t('documentList.rename')}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={onTogglePin}>
               {document.is_pinned ? (
                 <>
                   <PinOff className="h-4 w-4 mr-2" />
-                  Unpin
+                  {t('documentList.unpin')}
                 </>
               ) : (
                 <>
                   <Pin className="h-4 w-4 mr-2" />
-                  Pin
+                  {t('documentList.pin')}
                 </>
               )}
             </DropdownMenuItem>
@@ -218,7 +221,7 @@ function DocumentItem({
               onClick={onDelete}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              {t('documentList.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

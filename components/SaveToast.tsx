@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2, Check, AlertCircle } from 'lucide-react';
+import { useTranslations } from '@/contexts/LocaleContext';
 import { cn } from '@/lib/utils';
 
 export type SaveToastType = 'saving' | 'saved' | 'error' | null;
@@ -10,29 +11,30 @@ interface SaveToastProps {
   className?: string;
 }
 
-const config = {
-  saving: {
-    icon: Loader2,
-    text: '正在保存…',
-    className: 'bg-muted text-foreground',
-    iconClassName: 'animate-spin',
-  },
-  saved: {
-    icon: Check,
-    text: '已保存',
-    className: 'bg-primary text-primary-foreground',
-    iconClassName: '',
-  },
-  error: {
-    icon: AlertCircle,
-    text: '保存失败',
-    className: 'bg-destructive text-destructive-foreground',
-    iconClassName: '',
-  },
-};
-
 export function SaveToast({ type, className }: SaveToastProps) {
+  const t = useTranslations();
   if (!type) return null;
+
+  const config = {
+    saving: {
+      icon: Loader2,
+      text: t('saveToast.saving'),
+      className: 'bg-muted text-foreground',
+      iconClassName: 'animate-spin',
+    },
+    saved: {
+      icon: Check,
+      text: t('saveToast.saved'),
+      className: 'bg-primary text-primary-foreground',
+      iconClassName: '',
+    },
+    error: {
+      icon: AlertCircle,
+      text: t('saveToast.error'),
+      className: 'bg-destructive text-destructive-foreground',
+      iconClassName: '',
+    },
+  };
 
   const { icon: Icon, text, className: stateClass, iconClassName } = config[type];
 

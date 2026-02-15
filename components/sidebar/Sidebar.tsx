@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from '@/contexts/LocaleContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDocumentStore } from '@/lib/store/document-store';
@@ -47,6 +48,7 @@ export function Sidebar({
   onRenameDocument,
   onSelectDocument,
 }: SidebarProps) {
+  const t = useTranslations();
   const {
     sidebarOpen,
     toggleSidebar,
@@ -123,7 +125,7 @@ export function Sidebar({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="font-semibold text-lg">Documents</h2>
+          <h2 className="font-semibold text-lg">{t('editor.docList')}</h2>
           <Button variant="ghost" size="sm" onClick={toggleSidebar}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -134,7 +136,7 @@ export function Sidebar({
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search documents..."
+              placeholder={t('sidebar.searchDocuments')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
@@ -152,7 +154,7 @@ export function Sidebar({
             disabled={isCreating}
           >
             <Plus className="h-4 w-4 mr-1" />
-            New Doc
+            {t('sidebar.newDoc')}
           </Button>
           <Button variant="outline" size="sm" onClick={handleCreateFolder}>
             <FolderPlus className="h-4 w-4" />
@@ -170,7 +172,7 @@ export function Sidebar({
             )}
           >
             <FileText className="h-4 w-4" />
-            <span>All Documents</span>
+            <span>{t('sidebar.allDocuments')}</span>
             <span className="ml-auto text-xs text-muted-foreground">
               {documents.length}
             </span>
@@ -239,6 +241,7 @@ function FolderItem({
   onDeleteDocument,
   onRenameDocument,
 }: FolderItemProps) {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(folder.name);
@@ -296,14 +299,14 @@ function FolderItem({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setIsRenaming(true)}>
               <Edit2 className="h-4 w-4 mr-2" />
-              Rename
+              {t('documentList.rename')}
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={() => onDelete?.(folder.id)}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              {t('documentList.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
