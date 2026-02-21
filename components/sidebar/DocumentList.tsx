@@ -218,7 +218,11 @@ function DocumentItem({
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
-              onClick={onDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('[DocumentList] Delete clicked for document:', document.id);
+                onDelete();
+              }}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               {t('documentList.delete')}

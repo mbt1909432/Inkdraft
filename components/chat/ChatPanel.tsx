@@ -192,6 +192,8 @@ interface ChatPanelProps {
   documentId?: string;
   /** Enable Acontext for message persistence */
   useAcontext?: boolean;
+  /** Optional: save document immediately (called after applying edits) */
+  saveDocument?: () => void;
   className?: string;
   onClose?: () => void;
 }
@@ -202,6 +204,7 @@ export function ChatPanel({
   getSelectionMarkdown,
   documentId,
   useAcontext = false,
+  saveDocument,
   className,
   onClose,
 }: ChatPanelProps) {
@@ -299,6 +302,10 @@ export function ChatPanel({
       if (result.applied) currentMarkdown = result.newMarkdown;
     }
     setMarkdown(currentMarkdown);
+    // Immediately save document after applying edits
+    if (appliedPerTool.some(Boolean) && saveDocument) {
+      saveDocument();
+    }
     const appliedCount = appliedPerTool.filter(Boolean).length;
     setMessages((prev) =>
       prev.map((m) => {

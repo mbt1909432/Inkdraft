@@ -209,15 +209,20 @@ export default function DocumentPage() {
   };
 
   const handleDeleteDocument = async (id: string) => {
+    console.log('[handleDeleteDocument] Called with id:', id);
     if (confirm('Are you sure you want to delete this document?')) {
       try {
+        console.log('[handleDeleteDocument] User confirmed, deleting...');
         await removeDocument(id);
+        console.log('[handleDeleteDocument] Delete successful');
         if (currentDocument?.id === id) {
           router.push('/documents');
         }
       } catch (error) {
         console.error('Error deleting document:', error);
       }
+    } else {
+      console.log('[handleDeleteDocument] User cancelled');
     }
   };
 
@@ -389,6 +394,7 @@ export default function DocumentPage() {
               setMarkdown={updateCurrentContent}
               documentId={documentId}
               useAcontext={true}
+              saveDocument={save}
               onClose={() => setChatOpen(false)}
               className="h-full min-h-0"
             />
@@ -402,6 +408,7 @@ export default function DocumentPage() {
           getMarkdown={() => currentDocument?.content ?? ''}
           setMarkdown={updateCurrentContent}
           documentId={documentId}
+          saveDocument={save}
         />
       )}
 

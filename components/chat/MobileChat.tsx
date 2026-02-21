@@ -11,9 +11,10 @@ interface MobileChatProps {
   getMarkdown: () => string;
   setMarkdown: (markdown: string) => void;
   documentId?: string;
+  saveDocument?: () => void;
 }
 
-export function MobileChat({ getMarkdown, setMarkdown, documentId }: MobileChatProps) {
+export function MobileChat({ getMarkdown, setMarkdown, documentId, saveDocument }: MobileChatProps) {
   const t = useTranslations();
   const { chatSheetOpen, setChatSheetOpen } = useMobileStore();
 
@@ -42,6 +43,7 @@ export function MobileChat({ getMarkdown, setMarkdown, documentId }: MobileChatP
             setMarkdown={setMarkdown}
             documentId={documentId}
             useAcontext={true}
+            saveDocument={saveDocument}
             onClose={() => setChatSheetOpen(false)}
             className="h-full"
           />

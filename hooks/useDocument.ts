@@ -105,6 +105,20 @@ export function useDocument() {
 
   const removeDocument = useCallback(async (id: string) => {
     try {
+      // First, clean up Acontext resources
+      try {
+        const res = await fetch(`/api/ai/chat-acontext/cleanup?documentId=${id}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) {
+          console.warn('Failed to cleanup Acontext resources, continuing with document deletion');
+        }
+      } catch (cleanupError) {
+        console.warn('Acontext cleanup error:', cleanupError);
+        // Continue with document deletion even if cleanup fails
+      }
+
+      // Then delete the document
       await deleteDocument(id);
       deleteDocFromStore(id);
     } catch (error) {
