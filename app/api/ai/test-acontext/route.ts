@@ -7,6 +7,9 @@ import { NextResponse } from 'next/server';
 import { AcontextClient } from '@acontext/acontext';
 import { getAcontextConfig } from '@/lib/acontext/client';
 
+// Mark as dynamic to prevent prerendering
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const config = getAcontextConfig();
 
