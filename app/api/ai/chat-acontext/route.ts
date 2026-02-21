@@ -287,7 +287,7 @@ export async function POST(request: Request) {
             // Build tool_calls array if present
             const toolCalls = processedToolCalls.length > 0
               ? processedToolCalls.map((tc, idx) => ({
-                  id: `tc_${idx}`,
+                  id: `tc_${Date.now()}_${idx}`,
                   type: 'function' as const,
                   function: {
                     name: tc.name,
@@ -308,6 +308,32 @@ export async function POST(request: Request) {
               tool_calls: toolCalls,
             });
             console.log(LOG_TAG, 'Assistant message stored');
+
+            // CRITICAL: Store tool response messages after assistant with tool_calls
+            // OpenAI API requires: Assistant (tool_calls) → Tool Response
+            if (toolCalls && toolCalls.length > 0) {
+              for (let i = 0; i < toolCalls.length; i++) {
+                const tc = toolCalls[i];
+                const result = processedToolCalls[i];
+                const toolResponseContent = result.applied
+                  ? JSON.stringify({
+                      applied: true,
+                      name: result.name,
+                      arguments: result.arguments,
+                    })
+                  : JSON.stringify({
+                      applied: false,
+                      error: result.error || 'Edit not applied',
+                    });
+
+                await storeMessage(acontextClient, chatSession.acontextSessionId, {
+                  role: 'tool',
+                  tool_call_id: tc.id,
+                  content: toolResponseContent,
+                });
+              }
+              console.log(LOG_TAG, 'Tool response messages stored', { count: toolCalls.length });
+            }
           } catch (err) {
             console.error(LOG_TAG, 'Failed to store assistant message', err);
             // Continue even if storing fails - the response is still valid
