@@ -124,15 +124,21 @@ export async function POST(request: Request) {
 
     console.log(LOG_TAG, 'Chat session', {
       id: chatSession.id,
-      acontextSessionId: chatSession.acontextSessionId.slice(0, 8),
+      acontextSessionId: chatSession.acontextSessionId,
+      acontextDiskId: chatSession.acontextDiskId,
     });
 
     // Store user message
     try {
-      await storeMessage(acontextClient, chatSession.acontextSessionId, {
-        role: 'user',
+      const messageToStore = {
+        role: 'user' as const,
         content: body.content,
+      };
+      console.log(LOG_TAG, 'Storing message', {
+        sessionId: chatSession.acontextSessionId,
+        message: messageToStore,
       });
+      await storeMessage(acontextClient, chatSession.acontextSessionId, messageToStore);
       console.log(LOG_TAG, 'User message stored');
     } catch (err) {
       console.error(LOG_TAG, 'Failed to store user message', err);
