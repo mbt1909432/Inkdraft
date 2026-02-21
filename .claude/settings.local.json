@@ -18,7 +18,8 @@
       "Bash(python:*)",
       "Bash(npx shadcn@latest add:*)",
       "Bash(npx skills find:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(find:*)"
     ]
   }
 }
