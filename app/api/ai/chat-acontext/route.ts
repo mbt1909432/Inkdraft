@@ -128,15 +128,28 @@ export async function POST(request: Request) {
     });
 
     // Store user message
-    await storeMessage(acontextClient, chatSession.acontextSessionId, {
-      role: 'user',
-      content: body.content,
-    });
+    try {
+      await storeMessage(acontextClient, chatSession.acontextSessionId, {
+        role: 'user',
+        content: body.content,
+      });
+      console.log(LOG_TAG, 'User message stored');
+    } catch (err) {
+      console.error(LOG_TAG, 'Failed to store user message', err);
+      throw err;
+    }
 
     // Load message history from Acontext
-    const history = await getMessages(acontextClient, chatSession.acontextSessionId, {
-      limit: 50,
-    });
+    let history: Array<{ role: string; content: string }> = [];
+    try {
+      history = await getMessages(acontextClient, chatSession.acontextSessionId, {
+        limit: 50,
+      });
+      console.log(LOG_TAG, 'History loaded', { count: history.length });
+    } catch (err) {
+      console.error(LOG_TAG, 'Failed to load history', err);
+      // Continue without history if load fails
+    }
 
     // Build messages for OpenAI
     const systemContent = buildSystemContent(documentMarkdown, selectionMarkdown);
@@ -297,7 +310,12 @@ export async function POST(request: Request) {
           controller.close();
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
-          console.error(LOG_TAG, 'Stream error', { error: message });
+          const stack = err instanceof Error ? err.stack : undefined;
+          console.error(LOG_TAG, 'Stream error', {
+            error: message,
+            stack,
+            err: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+          });
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({ type: 'error', error: message })}\n\n`
