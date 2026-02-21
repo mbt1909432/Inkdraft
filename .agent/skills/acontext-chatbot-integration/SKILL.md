@@ -102,15 +102,25 @@ console.log(messages.items);
 
 ## Core Features
 
+### Message Types
+
+When using tools with LLMs, you must store **all message types** in the correct order:
+
+| Message Type | Role | When to Store |
+|-------------|------|---------------|
+| User message | `user` | After user sends input |
+| Assistant with tools | `assistant` | After LLM responds with `tool_calls` |
+| Tool response | `tool` | After executing each tool call |
+
 ### Session Management
 
 ```ts
 // Store message - MUST include format option!
 await client.sessions.storeMessage(session.id, {
-  role: "user" | "assistant" | "system",
+  role: "user" | "assistant" | "system" | "tool",
   content: string,              // Also supports ContentPart[] for images
   tool_calls?: ToolCall[],      // For assistant with tool calls
-  tool_call_id?: string         // For tool response
+  tool_call_id?: string         // For tool response (MUST match tool_call.id)
 }, { format: "openai" });       // REQUIRED!
 
 // Load messages
@@ -120,6 +130,57 @@ const result = await client.sessions.getMessages(session.id, {
 
 // Get token counts
 const tokens = await client.sessions.getTokenCounts(session.id);
+```
+
+### Complete Tool Call Flow
+
+```ts
+// 1. Store user message
+await client.sessions.storeMessage(sessionId, {
+  role: "user",
+  content: "Help me edit this document"
+}, { format: "openai" });
+
+// 2. Call LLM, get response with tool_calls
+const llmResponse = await openai.chat.completions.create({...});
+
+// 3. Store assistant message with tool_calls
+const toolCalls = llmResponse.choices[0].message.tool_calls;
+await client.sessions.storeMessage(sessionId, {
+  role: "assistant",
+  content: llmResponse.choices[0].message.content || "",
+  tool_calls: toolCalls
+}, { format: "openai" });
+
+// 4. Execute each tool and store response
+for (const tc of toolCalls) {
+  const result = await executeTool(tc.function.name, JSON.parse(tc.function.arguments));
+
+  // MUST store tool response after each execution
+  await client.sessions.storeMessage(sessionId, {
+    role: "tool",
+    tool_call_id: tc.id,  // MUST match the tool_call id
+    content: JSON.stringify(result)
+  }, { format: "openai" });
+}
+```
+
+### Loading History with Tool Calls
+
+```ts
+// Load messages - tool responses are included by default
+const result = await client.sessions.getMessages(sessionId, {
+  format: "openai",
+  limit: 50
+});
+
+// Messages will include:
+// - user messages
+// - assistant messages with tool_calls
+// - tool response messages (role: "tool")
+
+// For display, you may want to filter out tool responses:
+const displayMessages = result.items.filter(m => m.role !== "tool");
 ```
 
 ### Disk Tools

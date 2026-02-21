@@ -92,6 +92,13 @@ export async function storeMessage(
 
 /**
  * Load messages from an Acontext session
+ *
+ * IMPORTANT: This returns messages in OpenAI format, but filters out
+ * tool response messages (role: "tool") by default. The tool_calls
+ * are included in assistant messages.
+ *
+ * If you need to reconstruct the full conversation including tool
+ * responses for context, set includeToolResponses to true.
  */
 export async function loadMessages(
   client: AcontextClientLike,
@@ -99,6 +106,7 @@ export async function loadMessages(
   options?: {
     limit?: number;
     editStrategies?: EditStrategy[];
+    includeToolResponses?: boolean;
   }
 ): Promise<ChatMessage[]> {
   const result = await client.sessions.getMessages(sessionId, {
@@ -109,14 +117,18 @@ export async function loadMessages(
 
   if (!result?.items) return [];
 
-  // Filter out tool messages (they're embedded in assistant messages)
-  return result.items
-    .filter((item) => item.role !== "tool")
-    .map((item) => ({
-      role: item.role as "user" | "assistant" | "system",
-      content: item.content || "",
-      tool_calls: item.tool_calls,
-    }));
+  // By default, filter out tool response messages
+  // They are useful for LLM context but not for display
+  const items = options?.includeToolResponses
+    ? result.items
+    : result.items.filter((item) => item.role !== "tool");
+
+  return items.map((item) => ({
+    role: item.role as "user" | "assistant" | "system" | "tool",
+    content: item.content || "",
+    tool_calls: item.tool_calls,
+    tool_call_id: item.tool_call_id,
+  }));
 }
 
 /**
