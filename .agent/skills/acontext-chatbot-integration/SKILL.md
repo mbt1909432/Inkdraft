@@ -88,12 +88,15 @@ console.log(`Session: ${session.id}, Disk: ${disk.id}`);
 ### 3. Store and Load Messages
 
 ```ts
+// IMPORTANT: Always pass format: 'openai' option
 await client.sessions.storeMessage(session.id, {
   role: "user",
   content: "Hello!"
-});
+}, { format: "openai" });
 
-const messages = await client.sessions.getMessages(session.id);
+const messages = await client.sessions.getMessages(session.id, {
+  format: "openai"
+});
 console.log(messages.items);
 ```
 
@@ -102,16 +105,18 @@ console.log(messages.items);
 ### Session Management
 
 ```ts
-// Store message
+// Store message - MUST include format option!
 await client.sessions.storeMessage(session.id, {
   role: "user" | "assistant" | "system",
   content: string,              // Also supports ContentPart[] for images
   tool_calls?: ToolCall[],      // For assistant with tool calls
   tool_call_id?: string         // For tool response
-});
+}, { format: "openai" });       // REQUIRED!
 
 // Load messages
-const result = await client.sessions.getMessages(session.id);
+const result = await client.sessions.getMessages(session.id, {
+  format: "openai"              // Recommended for OpenAI compatibility
+});
 
 // Get token counts
 const tokens = await client.sessions.getTokenCounts(session.id);

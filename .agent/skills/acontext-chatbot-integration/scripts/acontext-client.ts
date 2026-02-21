@@ -6,7 +6,7 @@
  * Copy to your project and adjust imports as needed.
  */
 
-import { Acontext } from "@acontext/acontext";
+import { AcontextClient } from "@acontext/acontext";
 import type {
   AcontextConfig,
   AcontextClientLike,
@@ -27,7 +27,7 @@ import type {
 export function createAcontextClient(config: AcontextConfig | null): AcontextClientLike | null {
   if (!config) return null;
 
-  return new Acontext({
+  return new AcontextClient({
     apiKey: config.apiKey,
     baseUrl: config.baseUrl,
   }) as unknown as AcontextClientLike;
@@ -41,23 +41,14 @@ export function createAcontextClient(config: AcontextConfig | null): AcontextCli
 export async function createSession(
   client: AcontextClientLike,
   options?: {
-    userId?: string;
-    metadata?: Record<string, unknown>;
-    diskId?: string;
+    user?: string;
+    configs?: Record<string, unknown>;
   }
 ): Promise<AcontextSession> {
-  const configs: Record<string, unknown> = {
-    ...(options?.metadata || {}),
-  };
-
-  if (options?.userId) {
-    configs.userId = options.userId;
-  }
-  if (options?.diskId) {
-    configs.diskId = options.diskId;
-  }
-
-  return client.sessions.create({ configs });
+  return client.sessions.create({
+    user: options?.user,
+    configs: options?.configs,
+  });
 }
 
 /**

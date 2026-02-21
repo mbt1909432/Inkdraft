@@ -1,5 +1,44 @@
 # Troubleshooting
 
+## 400 Parameter Error
+
+```
+APIError: parameter error
+at SessionsAPI.storeMessage
+```
+
+### Cause: Missing format option
+
+```ts
+// WRONG - will throw "parameter error"
+await client.sessions.storeMessage(sessionId, {
+  role: "user",
+  content: "Hello"
+});
+
+// CORRECT - must include format option
+await client.sessions.storeMessage(sessionId, {
+  role: "user",
+  content: "Hello"
+}, { format: "openai" });
+```
+
+### Cause: Empty content
+
+```ts
+// WRONG - empty content may cause errors
+await client.sessions.storeMessage(sessionId, {
+  role: "assistant",
+  content: ""
+}, { format: "openai" });
+
+// CORRECT - ensure non-empty content
+await client.sessions.storeMessage(sessionId, {
+  role: "assistant",
+  content: content || " "
+}, { format: "openai" });
+```
+
 ## 404 Not Found Error
 
 ```
