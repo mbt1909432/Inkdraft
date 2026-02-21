@@ -237,10 +237,26 @@ export function ChatPanel({
 
         if (data.messages && data.messages.length > 0) {
           setMessages(
-            data.messages.map((m: { role: string; content: string; id?: string }, idx: number) => ({
+            data.messages.map((m: {
+              role: string;
+              content: string;
+              id?: string;
+              tool_calls?: Array<{
+                id: string;
+                type: 'function';
+                function: { name: string; arguments: string };
+              }>;
+            }, idx: number) => ({
               id: m.id || `loaded-${idx}`,
               role: m.role as 'user' | 'assistant',
               content: m.content,
+              // Include tool_calls if present (from Acontext history)
+              toolCalls: m.tool_calls?.map(tc => ({
+                name: tc.function.name,
+                arguments: JSON.parse(tc.function.arguments || '{}'),
+                applied: true,  // Assume applied since it's in history
+                userChoice: 'apply' as const,
+              })),
             }))
           );
           console.log('[ChatPanel] Loaded', data.messages.length, 'messages from Acontext');
