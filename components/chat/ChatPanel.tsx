@@ -5,7 +5,7 @@ import { marked } from 'marked';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Loader2, Send, MessageSquare, X, Check, Ban, StopCircle } from 'lucide-react';
+import { Loader2, Send, MessageSquare, X, Check, Ban, StopCircle, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { applyEditTool } from '@/lib/editor/apply-edit-tools';
 import { sanitizeHtml } from '@/lib/chat/sanitize-html';
@@ -188,6 +188,10 @@ interface ChatPanelProps {
   setMarkdown: (markdown: string) => void;
   /** Optional: current selection as markdown (for API context) */
   getSelectionMarkdown?: () => string;
+  /** Optional: document ID for Acontext session binding */
+  documentId?: string;
+  /** Enable Acontext for message persistence */
+  useAcontext?: boolean;
   className?: string;
   onClose?: () => void;
 }
@@ -196,16 +200,60 @@ export function ChatPanel({
   getMarkdown,
   setMarkdown,
   getSelectionMarkdown,
+  documentId,
+  useAcontext = false,
   className,
   onClose,
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingToolCalls, setStreamingToolCalls] = useState<Array<{ name: string; arguments: string }>>([]);
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
+  const [tokenCount, setTokenCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Load chat history from Acontext on mount
+  useEffect(() => {
+    if (!useAcontext || !documentId) return;
+
+    const loadHistory = async () => {
+      setIsLoadingHistory(true);
+      try {
+        const res = await fetch(`/api/ai/chat-acontext?documentId=${documentId}`);
+        if (!res.ok) {
+          console.error('[ChatPanel] Failed to load history');
+          return;
+        }
+
+        const data = await res.json();
+        if (data.session) {
+          setChatSessionId(data.session.id);
+          setTokenCount(data.tokenCount || 0);
+        }
+
+        if (data.messages && data.messages.length > 0) {
+          setMessages(
+            data.messages.map((m: { role: string; content: string; id?: string }, idx: number) => ({
+              id: m.id || `loaded-${idx}`,
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+            }))
+          );
+          console.log('[ChatPanel] Loaded', data.messages.length, 'messages from Acontext');
+        }
+      } catch (error) {
+        console.error('[ChatPanel] Error loading history:', error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+  }, [useAcontext, documentId]);
 
   const setToolChoice = (messageId: string, toolIndex: number, choice: 'apply' | 'decline') => {
     setMessages((prev) =>
@@ -306,18 +354,32 @@ export function ChatPanel({
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    try {
-      const res = await fetch('/api/ai/chat-stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    // Choose API endpoint based on useAcontext setting
+    const apiEndpoint = useAcontext ? '/api/ai/chat-acontext' : '/api/ai/chat-stream';
+
+    // Build request body based on API type
+    const requestBody = useAcontext
+      ? {
+          content: text,
+          documentId,
+          documentMarkdown,
+          selectionMarkdown: selectionMarkdown || null,
+          chatSessionId,
+        }
+      : {
           messages: [...messages, userMsg].map((m) => ({
             role: m.role,
             content: m.content,
           })),
           documentMarkdown,
           selectionMarkdown: selectionMarkdown || null,
-        }),
+        };
+
+    try {
+      const res = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
         signal: abortController.signal,
       });
 
@@ -373,6 +435,12 @@ export function ChatPanel({
           try {
             const data = JSON.parse(line.slice(6));
 
+            // Acontext session info
+            if (data.type === 'session' && useAcontext) {
+              setChatSessionId(data.chatSessionId);
+              console.log('[ChatPanel] Got session', data.chatSessionId);
+            }
+
             if (data.type === 'content') {
               finalContent += data.content;
               setStreamingContent(finalContent);
@@ -390,6 +458,10 @@ export function ChatPanel({
               finalContent = data.content;
               finalToolCalls = data.toolCalls || [];
               finalDoc = data.documentMarkdown;
+              // Update token count from Acontext
+              if (data.tokenCount !== undefined) {
+                setTokenCount(data.tokenCount);
+              }
             }
 
             if (data.type === 'error') {
@@ -473,24 +545,47 @@ export function ChatPanel({
         <span className="flex items-center gap-2 font-medium">
           <MessageSquare className="h-4 w-4" />
           AI 编辑助手
+          {useAcontext && tokenCount > 0 && (
+            <span className="text-xs text-muted-foreground font-normal">
+              ({Math.round(tokenCount / 1000)}K tokens)
+            </span>
+          )}
         </span>
-        {onClose && (
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {isLoadingHistory && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              加载历史...
+            </span>
+          )}
+          {useAcontext && messages.length > 0 && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1 mr-1">
+              <History className="h-3 w-3" />
+              {messages.length} 条
+            </span>
+          )}
+          {onClose && (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0 min-h-0">
         <div
           ref={scrollRef}
           className="flex-1 overflow-auto p-4 space-y-4"
         >
-          {messages.length === 0 && (
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : messages.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               输入指令修改文档，例如：「把第二段改得更正式」「在 2.1 下面加一条：注意时间管理」
             </p>
-          )}
-          {messages.map((m) => (
+          ) : null}
+          {!isLoadingHistory && messages.map((m) => (
             <div
               key={m.id}
               className={cn(

@@ -387,6 +387,8 @@ export default function DocumentPage() {
             <ChatPanel
               getMarkdown={() => currentDocument?.content ?? ''}
               setMarkdown={updateCurrentContent}
+              documentId={documentId}
+              useAcontext={true}
               onClose={() => setChatOpen(false)}
               className="h-full min-h-0"
             />
@@ -399,6 +401,7 @@ export default function DocumentPage() {
         <MobileChat
           getMarkdown={() => currentDocument?.content ?? ''}
           setMarkdown={updateCurrentContent}
+          documentId={documentId}
         />
       )}
 

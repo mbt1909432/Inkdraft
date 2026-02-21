@@ -16,7 +16,9 @@
       "mcp__zai-mcp-server__diagnose_error_screenshot",
       "mcp__zai-mcp-server__analyze_image",
       "Bash(python:*)",
-      "Bash(npx shadcn@latest add:*)"
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npx skills find:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

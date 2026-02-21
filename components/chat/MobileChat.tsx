@@ -10,9 +10,10 @@ import { useMobileStore } from '@/lib/store/mobile-store';
 interface MobileChatProps {
   getMarkdown: () => string;
   setMarkdown: (markdown: string) => void;
+  documentId?: string;
 }
 
-export function MobileChat({ getMarkdown, setMarkdown }: MobileChatProps) {
+export function MobileChat({ getMarkdown, setMarkdown, documentId }: MobileChatProps) {
   const t = useTranslations();
   const { chatSheetOpen, setChatSheetOpen } = useMobileStore();
 
@@ -39,6 +40,8 @@ export function MobileChat({ getMarkdown, setMarkdown }: MobileChatProps) {
           <ChatPanel
             getMarkdown={getMarkdown}
             setMarkdown={setMarkdown}
+            documentId={documentId}
+            useAcontext={true}
             onClose={() => setChatSheetOpen(false)}
             className="h-full"
           />
