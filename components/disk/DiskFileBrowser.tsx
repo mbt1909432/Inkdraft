@@ -36,14 +36,23 @@ interface DiskFileBrowserProps {
   documentId: string;
   trigger?: React.ReactNode;
   onFileSelect?: (path: string) => void;
+  /** Controlled open state */
+  open?: boolean;
+  /** Callback when open state changes */
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function DiskFileBrowser({
   documentId,
   trigger,
   onFileSelect,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: DiskFileBrowserProps) {
-  const [open, setOpen] = useState(false);
+  // Support both controlled and uncontrolled modes
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const [files, setFiles] = useState<DiskFile[]>([]);
   const [directories, setDirectories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);

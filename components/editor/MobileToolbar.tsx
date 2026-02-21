@@ -60,6 +60,8 @@ export function MobileToolbar({
   const t = useTranslations();
   const { currentDocument, isSaving, hasUnsavedChanges, syncStatus, outlineOpen, toggleOutline } = useDocumentStore();
   const { toggleChatSheet } = useMobileStore();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [diskBrowserOpen, setDiskBrowserOpen] = useState(false);
 
   // Sync status
   const getSyncIcon = () => {
@@ -129,7 +131,7 @@ export function MobileToolbar({
         </Button>
 
         {/* More menu */}
-        <DropdownMenu>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="更多操作">
               <MoreHorizontal className="h-5 w-5" />
@@ -171,17 +173,17 @@ export function MobileToolbar({
               </DropdownMenuItem>
             )}
 
-            {/* Disk Files */}
+            {/* Disk Files - close menu first, then open dialog */}
             {documentId && (
-              <DiskFileBrowser
-                documentId={documentId}
-                trigger={
-                  <div className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent rounded-sm">
-                    <FolderOpen className="h-4 w-4 mr-2" />
-                    Disk Files
-                  </div>
-                }
-              />
+              <DropdownMenuItem
+                onClick={() => {
+                  setMenuOpen(false);
+                  setTimeout(() => setDiskBrowserOpen(true), 100);
+                }}
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Disk Files
+              </DropdownMenuItem>
             )}
 
             <DropdownMenuSeparator />
@@ -217,6 +219,15 @@ export function MobileToolbar({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Disk File Browser - controlled externally */}
+        {documentId && (
+          <DiskFileBrowser
+            documentId={documentId}
+            open={diskBrowserOpen}
+            onOpenChange={setDiskBrowserOpen}
+          />
+        )}
       </div>
     </div>
   );
