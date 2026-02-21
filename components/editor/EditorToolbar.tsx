@@ -25,6 +25,7 @@ import {
   FileText,
   FileType,
   MessageSquare,
+  FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from '@/components/theme-switcher';
@@ -38,6 +39,7 @@ import {
 import { downloadAsWord } from '@/lib/export/markdown-to-docx';
 import { downloadAsPdf } from '@/lib/export/markdown-to-pdf';
 import { toast } from 'sonner';
+import { DiskFileBrowser } from '@/components/disk/DiskFileBrowser';
 
 interface EditorToolbarProps {
   onSave?: () => Promise<void>;
@@ -47,9 +49,11 @@ interface EditorToolbarProps {
   onDraft?: (markdown: string) => void;
   /** Open AI chat panel for edit-by-chat */
   onOpenChat?: () => void;
+  /** Document ID for disk file browser */
+  documentId?: string;
 }
 
-export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenChat }: EditorToolbarProps) {
+export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenChat, documentId }: EditorToolbarProps) {
   const t = useTranslations();
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);
@@ -238,6 +242,19 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             <MessageSquare className="h-4 w-4" />
             <span className="ml-1 hidden sm:inline">{t('editor.aiAssistant')}</span>
           </Button>
+        )}
+
+        {/* Disk File Browser */}
+        {documentId && (
+          <DiskFileBrowser
+            documentId={documentId}
+            trigger={
+              <Button variant="outline" size="sm" aria-label="Disk Files">
+                <FolderOpen className="h-4 w-4" />
+                <span className="ml-1 hidden sm:inline">Files</span>
+              </Button>
+            }
+          />
         )}
 
         {/* Manual save */}

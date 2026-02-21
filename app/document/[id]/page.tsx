@@ -353,6 +353,7 @@ export default function DocumentPage() {
             onLogout={handleLogout}
             onDraft={(markdown) => updateCurrentContent(markdown)}
             onOpenChat={() => setChatOpen((v) => !v)}
+            documentId={documentId}
           />
         )}
 
@@ -364,6 +365,7 @@ export default function DocumentPage() {
             onLogout={handleLogout}
             onDraft={(markdown) => updateCurrentContent(markdown)}
             onOpenChat={() => setChatOpen((v) => !v)}
+            documentId={documentId}
           />
         )}
 

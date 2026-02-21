@@ -24,6 +24,7 @@ import {
   EyeOff,
   MoreHorizontal,
   ChevronLeft,
+  FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -37,6 +38,7 @@ import { downloadAsWord } from '@/lib/export/markdown-to-docx';
 import { downloadAsPdf } from '@/lib/export/markdown-to-pdf';
 import { toast } from 'sonner';
 import { useMobileStore } from '@/lib/store/mobile-store';
+import { DiskFileBrowser } from '@/components/disk/DiskFileBrowser';
 
 interface MobileToolbarProps {
   onSave?: () => Promise<void>;
@@ -44,6 +46,7 @@ interface MobileToolbarProps {
   onLogout?: () => void;
   onDraft?: (markdown: string) => void;
   onOpenChat?: () => void;
+  documentId?: string;
 }
 
 export function MobileToolbar({
@@ -52,6 +55,7 @@ export function MobileToolbar({
   onLogout,
   onDraft,
   onOpenChat,
+  documentId,
 }: MobileToolbarProps) {
   const t = useTranslations();
   const { currentDocument, isSaving, hasUnsavedChanges, syncStatus, outlineOpen, toggleOutline } = useDocumentStore();
@@ -165,6 +169,19 @@ export function MobileToolbar({
                 <Sparkles className="h-4 w-4 mr-2" />
                 {t('editor.draft')}
               </DropdownMenuItem>
+            )}
+
+            {/* Disk Files */}
+            {documentId && (
+              <DiskFileBrowser
+                documentId={documentId}
+                trigger={
+                  <div className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent rounded-sm">
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Disk Files
+                  </div>
+                }
+              />
             )}
 
             <DropdownMenuSeparator />
