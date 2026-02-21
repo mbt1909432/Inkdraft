@@ -283,10 +283,35 @@ export async function POST(request: Request) {
           }
 
           // Store assistant message
-          await storeMessage(acontextClient, chatSession.acontextSessionId, {
-            role: 'assistant',
-            content: currentContent,
-          });
+          try {
+            // Build tool_calls array if present
+            const toolCalls = processedToolCalls.length > 0
+              ? processedToolCalls.map((tc, idx) => ({
+                  id: `tc_${idx}`,
+                  type: 'function' as const,
+                  function: {
+                    name: tc.name,
+                    arguments: JSON.stringify(tc.arguments),
+                  },
+                }))
+              : undefined;
+
+            console.log(LOG_TAG, 'Storing assistant message', {
+              contentLen: (currentContent || ' ').length,
+              hasToolCalls: !!toolCalls,
+              toolCallsCount: toolCalls?.length || 0,
+            });
+
+            await storeMessage(acontextClient, chatSession.acontextSessionId, {
+              role: 'assistant',
+              content: currentContent || ' ',  // Ensure non-empty content
+              tool_calls: toolCalls,
+            });
+            console.log(LOG_TAG, 'Assistant message stored');
+          } catch (err) {
+            console.error(LOG_TAG, 'Failed to store assistant message', err);
+            // Continue even if storing fails - the response is still valid
+          }
 
           // Get token counts
           const tokenCount = await getTokenCounts(acontextClient, chatSession.acontextSessionId);
