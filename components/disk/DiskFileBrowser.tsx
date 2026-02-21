@@ -47,7 +47,7 @@ export function DiskFileBrowser({
   const [files, setFiles] = useState<DiskFile[]>([]);
   const [directories, setDirectories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentPath, setCurrentPath] = useState('images');
+  const [currentPath, setCurrentPath] = useState('/images/');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -139,6 +139,14 @@ export function DiskFileBrowser({
   };
 
   const navigateTo = (dir: string) => {
+    // Ensure path starts with /
+    if (!dir.startsWith('/')) {
+      dir = '/' + dir;
+    }
+    // Ensure path ends with /
+    if (!dir.endsWith('/')) {
+      dir = dir + '/';
+    }
     setCurrentPath(dir);
   };
 
@@ -176,7 +184,7 @@ export function DiskFileBrowser({
         {/* Breadcrumb */}
         <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
           <button
-            onClick={() => navigateTo('')}
+            onClick={() => navigateTo('/')}
             className="hover:text-foreground transition-colors"
           >
             root
@@ -185,7 +193,7 @@ export function DiskFileBrowser({
             <span key={index} className="flex items-center gap-1">
               <ChevronRight className="h-4 w-4" />
               <button
-                onClick={() => navigateTo(pathParts.slice(0, index + 1).join('/'))}
+                onClick={() => navigateTo('/' + pathParts.slice(0, index + 1).join('/') + '/')}
                 className="hover:text-foreground transition-colors"
               >
                 {part}
@@ -226,7 +234,7 @@ export function DiskFileBrowser({
               {directories.map((dir) => (
                 <button
                   key={dir}
-                  onClick={() => navigateTo(currentPath ? `${currentPath}/${dir}` : dir)}
+                  onClick={() => navigateTo(currentPath + dir + '/')}
                   className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
                 >
                   <FolderOpen className="h-5 w-5 text-muted-foreground" />

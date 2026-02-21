@@ -13,6 +13,20 @@ import { FileUpload } from '@acontext/acontext';
 
 const LOG_TAG = '[api/images/upload]';
 
+/**
+ * Normalize path to Acontext format: /path/
+ */
+function normalizePath(path: string): string {
+  let normalized = path;
+  if (!normalized.startsWith('/')) {
+    normalized = '/' + normalized;
+  }
+  if (!normalized.endsWith('/')) {
+    normalized = normalized + '/';
+  }
+  return normalized;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get user
@@ -65,7 +79,8 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).slice(2);
     const filename = `${timestamp}-${randomStr}.${safeExt}`;
-    const filePath = 'images';
+    // Acontext requires path format: /path/
+    const filePath = normalizePath('images');
 
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
@@ -88,8 +103,8 @@ export async function POST(request: NextRequest) {
 
     console.log(LOG_TAG, 'Upload successful', { artifact });
 
-    // Return disk:: protocol URL
-    const diskUrl = `disk::${filePath}/${filename}`;
+    // Return disk:: protocol URL (without the leading/trailing slashes for cleaner URLs)
+    const diskUrl = `disk::images/${filename}`;
 
     return NextResponse.json({
       url: diskUrl,

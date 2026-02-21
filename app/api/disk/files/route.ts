@@ -11,6 +11,50 @@ import { getOrCreateChatSession } from '@/lib/acontext/session-store';
 
 const LOG_TAG = '[api/disk/files]';
 
+/**
+ * Normalize path to Acontext format: /path/
+ * Empty string or '/' returns undefined (root listing)
+ */
+function normalizeListPath(path: string | null): string | undefined {
+  if (!path || path === '/' || path === '') {
+    return undefined; // Root listing
+  }
+  let normalized = path;
+  if (!normalized.startsWith('/')) {
+    normalized = '/' + normalized;
+  }
+  if (!normalized.endsWith('/')) {
+    normalized = normalized + '/';
+  }
+  return normalized;
+}
+
+/**
+ * Normalize file path for delete/get operations
+ * Returns { filePath: '/path/', filename: 'file.png' }
+ */
+function parseFilePath(path: string): { filePath: string; filename: string } {
+  // Remove leading/trailing slashes for parsing
+  let cleanPath = path.replace(/^\/+|\/+$/g, '');
+  const parts = cleanPath.split('/');
+  const filename = parts.pop() || '';
+  let filePath = parts.join('/');
+
+  // Normalize filePath to /path/ format
+  if (filePath) {
+    if (!filePath.startsWith('/')) {
+      filePath = '/' + filePath;
+    }
+    if (!filePath.endsWith('/')) {
+      filePath = filePath + '/';
+    }
+  } else {
+    filePath = '/';
+  }
+
+  return { filePath, filename };
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Get user
@@ -26,7 +70,7 @@ export async function GET(request: NextRequest) {
     // Get query params
     const { searchParams } = new URL(request.url);
     const documentId = searchParams.get('documentId');
-    const path = searchParams.get('path') || '/';
+    const rawPath = searchParams.get('path');
 
     if (!documentId) {
       return NextResponse.json(
@@ -56,11 +100,14 @@ export async function GET(request: NextRequest) {
 
     const diskId = session.acontextDiskId;
 
-    console.log(LOG_TAG, 'Listing files', { diskId, path });
+    // Normalize path for Acontext API
+    const normalizedPath = normalizeListPath(rawPath);
+
+    console.log(LOG_TAG, 'Listing files', { diskId, rawPath, normalizedPath });
 
     // List artifacts in disk
     const result = await client.disks.artifacts.list(diskId, {
-      path: path === '/' ? undefined : path,
+      path: normalizedPath,
     });
 
     console.log(LOG_TAG, 'List result', {
@@ -68,19 +115,27 @@ export async function GET(request: NextRequest) {
       directories: result.directories,
     });
 
-    // Format response
-    const files = (result.artifacts || []).map((artifact) => ({
-      path: artifact.path,
-      filename: artifact.filename,
-      fullPath: artifact.path ? `${artifact.path}/${artifact.filename}` : artifact.filename,
-      createdAt: artifact.created_at,
-      updatedAt: artifact.updated_at,
-      meta: artifact.meta,
-    }));
+    // Format response - remove leading/trailing slashes from path for cleaner display
+    const files = (result.artifacts || []).map((artifact) => {
+      const displayPath = artifact.path?.replace(/^\/+|\/+$/g, '') || '';
+      return {
+        path: displayPath,
+        filename: artifact.filename,
+        fullPath: displayPath ? `${displayPath}/${artifact.filename}` : artifact.filename,
+        createdAt: artifact.created_at,
+        updatedAt: artifact.updated_at,
+        meta: artifact.meta,
+      };
+    });
+
+    // Clean up directory names
+    const directories = (result.directories || []).map((dir) =>
+      dir.replace(/^\/+|\/+$/g, '')
+    ).filter(Boolean);
 
     return NextResponse.json({
       files,
-      directories: result.directories || [],
+      directories,
       diskId,
     });
   } catch (error) {
@@ -135,12 +190,10 @@ export async function DELETE(request: NextRequest) {
 
     const diskId = session.acontextDiskId;
 
-    // Parse path to get filePath and filename
-    const pathParts = path.split('/');
-    const filename = pathParts.pop() || '';
-    const filePath = pathParts.join('/') || '';
+    // Parse path to get filePath and filename in Acontext format
+    const { filePath, filename } = parseFilePath(path);
 
-    console.log(LOG_TAG, 'Deleting file', { diskId, filePath, filename });
+    console.log(LOG_TAG, 'Deleting file', { diskId, filePath, filename, rawPath: path });
 
     // Delete artifact
     await client.disks.artifacts.delete(diskId, {

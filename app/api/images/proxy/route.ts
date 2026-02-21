@@ -11,6 +11,32 @@ import { getOrCreateChatSession } from '@/lib/acontext/session-store';
 
 const LOG_TAG = '[api/images/proxy]';
 
+/**
+ * Normalize file path for get operations
+ * Returns { filePath: '/path/', filename: 'file.png' }
+ */
+function parseFilePath(path: string): { filePath: string; filename: string } {
+  // Remove leading/trailing slashes for parsing
+  let cleanPath = path.replace(/^\/+|\/+$/g, '');
+  const parts = cleanPath.split('/');
+  const filename = parts.pop() || '';
+  let filePath = parts.join('/');
+
+  // Normalize filePath to /path/ format
+  if (filePath) {
+    if (!filePath.startsWith('/')) {
+      filePath = '/' + filePath;
+    }
+    if (!filePath.endsWith('/')) {
+      filePath = filePath + '/';
+    }
+  } else {
+    filePath = '/';
+  }
+
+  return { filePath, filename };
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Get user
@@ -56,12 +82,10 @@ export async function GET(request: NextRequest) {
 
     const diskId = session.acontextDiskId;
 
-    // Parse path to get filePath and filename
-    const pathParts = path.split('/');
-    const filename = pathParts.pop() || '';
-    const filePath = pathParts.join('/') || '';
+    // Parse path to get filePath and filename in Acontext format
+    const { filePath, filename } = parseFilePath(path);
 
-    console.log(LOG_TAG, 'Getting public URL for proxy', { diskId, filePath, filename });
+    console.log(LOG_TAG, 'Getting public URL for proxy', { diskId, filePath, filename, rawPath: path });
 
     // Get artifact with public URL
     const result = await client.disks.artifacts.get(diskId, {
