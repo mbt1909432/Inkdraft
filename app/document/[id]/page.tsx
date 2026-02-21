@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { useDocument } from '@/hooks/useDocument';
 import { useFolder } from '@/hooks/useFolder';
 import { useAutoSave } from '@/hooks/useAutoSave';
@@ -211,15 +212,18 @@ export default function DocumentPage() {
   const handleDeleteDocument = async (id: string) => {
     console.log('[handleDeleteDocument] Called with id:', id);
     if (confirm('Are you sure you want to delete this document?')) {
+      const toastId = toast.loading('Deleting document...');
       try {
         console.log('[handleDeleteDocument] User confirmed, deleting...');
         await removeDocument(id);
         console.log('[handleDeleteDocument] Delete successful');
+        toast.success('Document deleted', { id: toastId });
         if (currentDocument?.id === id) {
           router.push('/documents');
         }
       } catch (error) {
         console.error('Error deleting document:', error);
+        toast.error('Failed to delete document', { id: toastId });
       }
     } else {
       console.log('[handleDeleteDocument] User cancelled');

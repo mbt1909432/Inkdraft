@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useDocument } from '@/hooks/useDocument';
 import { useFolder } from '@/hooks/useFolder';
 import { useAutoSave } from '@/hooks/useAutoSave';
@@ -116,20 +117,26 @@ export default function EditorPage() {
 
   const handleDeleteDocument = async (id: string) => {
     if (confirm('确定要删除这个文档吗？')) {
+      const toastId = toast.loading('删除中...');
       try {
         await removeDocument(id);
+        toast.success('文档已删除', { id: toastId });
       } catch (error) {
         console.error('Error deleting document:', error);
+        toast.error('删除失败', { id: toastId });
       }
     }
   };
 
   const handleDeleteFolder = async (id: string) => {
     if (confirm('确定要删除这个文件夹吗？')) {
+      const toastId = toast.loading('删除中...');
       try {
         await removeFolder(id);
+        toast.success('文件夹已删除', { id: toastId });
       } catch (error) {
         console.error('Error deleting folder:', error);
+        toast.error('删除失败', { id: toastId });
       }
     }
   };
