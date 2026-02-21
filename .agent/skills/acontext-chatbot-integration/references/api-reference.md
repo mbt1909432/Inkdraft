@@ -126,6 +126,15 @@ Import `FileUpload` for file operations:
 import { FileUpload } from "@acontext/acontext";
 ```
 
+> **⚠️ Path Format Requirement**
+>
+> All `file_path` parameters **MUST** start and end with `/` (e.g., `/documents/`, `/images/`, `/`).
+>
+> - ✅ Correct: `file_path: "/images/"`
+> - ❌ Wrong: `file_path: "images"` or `file_path: "/images"`
+>
+> The API will return `400 - "both ends of the path must be '/'"` if the format is incorrect.
+
 ### Upload Artifact
 
 ```ts
