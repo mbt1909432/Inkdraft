@@ -3,7 +3,7 @@
  */
 
 import { AcontextClient } from '@acontext/acontext';
-import type { AcontextConfig, AcontextMessage, GetMessagesOptions } from './types';
+import type { AcontextConfig, AcontextMessage } from './types';
 
 const LOG_TAG = '[acontext/client]';
 
@@ -68,8 +68,26 @@ export async function storeMessage(
   sessionId: string,
   message: AcontextMessage
 ): Promise<void> {
-  // Cast to unknown first, then to Record<string, unknown> to satisfy Acontext SDK typing
-  await client.sessions.storeMessage(sessionId, message as unknown as Record<string, unknown>);
+  // Build message blob with proper format
+  const messageBlob: Record<string, unknown> = {
+    role: message.role,
+    content: message.content,
+  };
+
+  // Include tool_calls for assistant messages
+  if (message.role === 'assistant' && message.tool_calls) {
+    messageBlob.tool_calls = message.tool_calls;
+  }
+
+  // Include tool_call_id for tool response messages
+  if (message.role === 'tool' && message.tool_call_id) {
+    messageBlob.tool_call_id = message.tool_call_id;
+  }
+
+  // IMPORTANT: Must pass format option
+  await client.sessions.storeMessage(sessionId, messageBlob, {
+    format: 'openai',
+  });
 }
 
 /**
@@ -81,12 +99,14 @@ export async function getMessages(
   options?: { limit?: number }
 ): Promise<AcontextMessage[]> {
   const result = await client.sessions.getMessages(sessionId, {
-    format: 'openai',  // Use OpenAI format for compatibility
+    format: 'openai',
     limit: options?.limit,
   });
 
+  if (!result?.items) return [];
+
   // Filter out tool messages for display (they're used internally)
-  const items = (result?.items || []) as AcontextMessage[];
+  const items = result.items as AcontextMessage[];
   return items.filter((m) => m.role !== 'tool');
 }
 
