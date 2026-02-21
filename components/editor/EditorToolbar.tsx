@@ -286,7 +286,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             <DropdownMenuItem
               onClick={() => {
                 if (currentDocument) {
-                  downloadAsWord(currentDocument.content ?? '', currentDocument.title)
+                  downloadAsWord(currentDocument.content ?? '', currentDocument.title, documentId)
                     .then(() => toast.success(t('editor.exportWordSuccess')))
                     .catch((e) =>
                       toast.error(e instanceof Error ? e.message : t('editor.exportWordFailed'))
@@ -300,7 +300,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             <DropdownMenuItem
               onClick={() => {
                 if (currentDocument) {
-                  downloadAsPdf(currentDocument.content ?? '', currentDocument.title)
+                  downloadAsPdf(currentDocument.content ?? '', currentDocument.title, documentId)
                     .then(() => toast.success(t('editor.exportPdfSuccess')))
                     .catch((e) =>
                       toast.error(e instanceof Error ? e.message : t('editor.exportPdfFailed'))

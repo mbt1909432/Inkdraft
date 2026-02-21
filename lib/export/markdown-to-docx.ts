@@ -3,12 +3,25 @@
  * PDF remains client-side.
  */
 
-export async function downloadAsWord(markdown: string, filename: string): Promise<void> {
+import { resolveImageUrlsForExport } from './resolve-image-urls';
+
+export async function downloadAsWord(markdown: string, filename: string, documentId?: string): Promise<void> {
   const title = filename.endsWith('.docx') ? filename.slice(0, -5) : filename;
+
+  // Resolve disk:: and proxy URLs to public URLs before export
+  let resolvedMarkdown = markdown;
+  if (documentId) {
+    try {
+      resolvedMarkdown = await resolveImageUrlsForExport(markdown, documentId);
+    } catch (error) {
+      console.warn('[downloadAsWord] Failed to resolve image URLs:', error);
+    }
+  }
+
   const res = await fetch('/api/export/word', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, content: markdown }),
+    body: JSON.stringify({ title, content: resolvedMarkdown }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

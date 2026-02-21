@@ -6,6 +6,7 @@
 import { marked } from 'marked';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { resolveImageUrlsForExport } from './resolve-image-urls';
 
 const A4_WIDTH_PT = 595.28;
 const A4_HEIGHT_PT = 841.89;
@@ -14,8 +15,18 @@ const CONTENT_WIDTH_PT = A4_WIDTH_PT - MARGIN_PT * 2;
 const CONTENT_HEIGHT_PT = A4_HEIGHT_PT - MARGIN_PT * 2;
 
 /** Create a hidden container, render HTML, capture with html2canvas, then build PDF. */
-export async function downloadAsPdf(markdown: string, filename: string): Promise<void> {
-  const html = await marked.parse(markdown);
+export async function downloadAsPdf(markdown: string, filename: string, documentId?: string): Promise<void> {
+  // Resolve disk:: and proxy URLs to public URLs before export
+  let resolvedMarkdown = markdown;
+  if (documentId) {
+    try {
+      resolvedMarkdown = await resolveImageUrlsForExport(markdown, documentId);
+    } catch (error) {
+      console.warn('[downloadAsPdf] Failed to resolve image URLs:', error);
+    }
+  }
+
+  const html = await marked.parse(resolvedMarkdown);
   const container = document.createElement('div');
   container.style.position = 'absolute';
   container.style.left = '-9999px';
@@ -40,10 +51,25 @@ export async function downloadAsPdf(markdown: string, filename: string): Promise
     .pdf-export ul, .pdf-export ol { margin: 0.4em 0; padding-left: 1.5em; }
     .pdf-export pre { background: #f5f5f5; padding: 0.5em; overflow-x: auto; }
     .pdf-export code { font-family: monospace; }
+    .pdf-export img { max-width: 100%; height: auto; }
   `;
   container.className = 'pdf-export';
   document.head.appendChild(style);
   document.body.appendChild(container);
+
+  // Wait for images to load
+  const images = container.querySelectorAll('img');
+  await Promise.all(
+    Array.from(images).map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // Continue even if image fails
+        // Timeout after 5 seconds
+        setTimeout(() => resolve(), 5000);
+      });
+    })
+  );
 
   try {
     const scale = 2;

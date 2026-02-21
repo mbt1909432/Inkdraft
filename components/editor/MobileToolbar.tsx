@@ -191,7 +191,7 @@ export function MobileToolbar({
             {/* Export */}
             <DropdownMenuItem
               onClick={() => {
-                downloadAsWord(currentDocument.content ?? '', currentDocument.title)
+                downloadAsWord(currentDocument.content ?? '', currentDocument.title, documentId)
                   .then(() => toast.success(t('editor.exportWordSuccess')))
                   .catch((e) => toast.error(e.message));
               }}
@@ -201,7 +201,7 @@ export function MobileToolbar({
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                downloadAsPdf(currentDocument.content ?? '', currentDocument.title)
+                downloadAsPdf(currentDocument.content ?? '', currentDocument.title, documentId)
                   .then(() => toast.success(t('editor.exportPdfSuccess')))
                   .catch((e) => toast.error(e.message));
               }}
