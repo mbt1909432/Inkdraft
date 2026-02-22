@@ -58,10 +58,12 @@ function transformDiskUrlsToProxy(markdown: string, documentId: string): string 
  */
 function transformProxyUrlsToDisk(markdown: string, documentId: string): string {
   // Match proxy URLs and convert back to disk::
-  const proxyPattern = `/api/images/proxy\\?path=([^&]+)&documentId=${encodeURIComponent(documentId)}`;
+  // Handle both & and \& (MDXEditor may escape the ampersand)
+  const escapedDocId = encodeURIComponent(documentId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const proxyPattern = `/api/images/proxy\\?path=([^&\\\\]+)(?:\\\\)?&documentId=${escapedDocId}`;
 
   return markdown.replace(
-    new RegExp(`!\\[([^\\]]*)\\]\\(${proxyPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g'),
+    new RegExp(`!\\[([^\\]]*)\\]\\(${proxyPattern}\\)`, 'g'),
     (match, alt, encodedPath) => {
       const path = decodeURIComponent(encodedPath);
       return `![${alt}](disk::${path})`;

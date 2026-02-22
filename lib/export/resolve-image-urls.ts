@@ -4,6 +4,14 @@
  */
 
 /**
+ * Clean path - remove trailing backslashes and other artifacts
+ */
+function cleanPath(path: string): string {
+  // Remove trailing backslash (from escaped & in markdown)
+  return path.replace(/\\+$/, '').trim();
+}
+
+/**
  * Fetch image and convert to data URL
  */
 async function fetchImageAsDataUrl(url: string): Promise<string | null> {
@@ -36,8 +44,8 @@ export async function resolveImageUrlsForExport(
   // Pattern 1: disk:: URLs
   const diskPattern = /!\[([^\]]*)\]\(disk::([^)]+)\)/g;
 
-  // Pattern 2: /api/images/proxy URLs
-  const proxyPattern = /!\[([^\]]*)\]\(\/api\/images\/proxy\?path=([^&]+)&documentId=([^)]+)\)/g;
+  // Pattern 2: /api/images/proxy URLs - handle both & and \&
+  const proxyPattern = /!\[([^\]]*)\]\(\/api\/images\/proxy\?path=([^&\\]+)(?:\\)?&documentId=([^)]+)\)/g;
 
   // Pattern 3: Already public URLs (https://...) - these might expire
   const publicUrlPattern = /!\[([^\]]*)\]\((https:\/\/[acontextcdn][^)]+)\)/g;
@@ -56,7 +64,7 @@ export async function resolveImageUrlsForExport(
     urlsToResolve.push({
       match: match[0],
       alt: match[1],
-      path: match[2],
+      path: cleanPath(match[2]),
       docId: documentId,
       type: 'disk',
     });
@@ -67,7 +75,7 @@ export async function resolveImageUrlsForExport(
     urlsToResolve.push({
       match: match[0],
       alt: match[1],
-      path: decodeURIComponent(match[2]),
+      path: cleanPath(decodeURIComponent(match[2])),
       docId: match[3],
       type: 'proxy',
     });
