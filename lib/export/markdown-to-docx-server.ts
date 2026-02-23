@@ -62,7 +62,11 @@ function getImageTypeFromDataUrl(dataUrl: string): ImageType | null {
   return mime === 'jpg' ? 'jpg' : (mime as ImageType);
 }
 
-/** Get image dimensions and compute display size (max 400px on longer side, keep aspect ratio). */
+/** Get image dimensions and compute display size.
+ *  - Max 400px on longer side for large images (downscale only)
+ *  - Keep original size for small images (no upscale)
+ *  - Keep aspect ratio
+ */
 async function getDisplaySize(buffer: Buffer): Promise<{ width: number; height: number }> {
   const DEFAULT = { width: 240, height: 180 };
   try {
@@ -71,7 +75,16 @@ async function getDisplaySize(buffer: Buffer): Promise<{ width: number; height: 
     const w = meta.width ?? 0;
     const h = meta.height ?? 0;
     if (!w || !h) return DEFAULT;
+
     const max = 400;
+
+    // Only downscale if image is larger than max, don't upscale small images
+    if (w <= max && h <= max) {
+      // Image is smaller than max, use original size
+      return { width: w, height: h };
+    }
+
+    // Image is larger than max, scale down proportionally
     if (w >= h) {
       return { width: max, height: Math.round((max * h) / w) };
     }
