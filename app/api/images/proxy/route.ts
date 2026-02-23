@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path');
     const documentId = searchParams.get('documentId');
+    const download = searchParams.get('download'); // If 'true', return image data instead of redirect
 
     if (!path || !documentId) {
       return NextResponse.json(
@@ -100,6 +101,29 @@ export async function GET(request: NextRequest) {
         { error: 'Failed to get public URL' },
         { status: 500 }
       );
+    }
+
+    // If download=true, fetch and return the image data directly
+    if (download === 'true') {
+      console.log(LOG_TAG, 'Fetching image data for download');
+      const imageResponse = await fetch(result.public_url);
+      if (!imageResponse.ok) {
+        return NextResponse.json(
+          { error: 'Failed to fetch image' },
+          { status: 500 }
+        );
+      }
+
+      const imageData = await imageResponse.arrayBuffer();
+      const contentType = imageResponse.headers.get('content-type') || 'image/png';
+
+      return new NextResponse(imageData, {
+        status: 200,
+        headers: {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=3600',
+        },
+      });
     }
 
     // Redirect to public URL

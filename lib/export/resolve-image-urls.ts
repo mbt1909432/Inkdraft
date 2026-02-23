@@ -13,9 +13,11 @@ function cleanPath(path: string): string {
 
 /**
  * Fetch image and convert to data URL
+ * Uses proxy API to avoid CORS issues
  */
 async function fetchImageAsDataUrl(url: string): Promise<string | null> {
   try {
+    // Try direct fetch first
     const response = await fetch(url);
     if (!response.ok) return null;
 
@@ -28,7 +30,37 @@ async function fetchImageAsDataUrl(url: string): Promise<string | null> {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.warn('[fetchImageAsDataUrl] Failed:', url, error);
+    console.warn('[fetchImageAsDataUrl] Direct fetch failed, CORS likely:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch image via proxy and convert to data URL
+ */
+async function fetchImageViaProxyAsDataUrl(path: string, documentId: string): Promise<string | null> {
+  try {
+    // Use our proxy API with download=true to get actual image data
+    // This avoids CORS issues with S3 redirects
+    const proxyUrl = `/api/images/proxy?path=${encodeURIComponent(path)}&documentId=${encodeURIComponent(documentId)}&download=true`;
+    const response = await fetch(proxyUrl, {
+      credentials: 'include', // Include cookies for authentication
+    });
+    if (!response.ok) {
+      console.warn('[fetchImageViaProxyAsDataUrl] Response not OK:', response.status);
+      return null;
+    }
+
+    const blob = await response.blob();
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.warn('[fetchImageViaProxyAsDataUrl] Failed:', error);
     return null;
   }
 }
@@ -107,33 +139,21 @@ export async function resolveImageUrlsForExport(
   await Promise.all(
     uniqueUrls.map(async (urlInfo) => {
       try {
-        let publicUrl: string;
+        let dataUrl: string | null = null;
 
-        if (urlInfo.type === 'public') {
-          // Already a public URL, just fetch it
-          publicUrl = urlInfo.path;
-        } else {
-          // Get public URL first
-          const response = await fetch(
-            `/api/images/url?path=${encodeURIComponent(urlInfo.path)}&documentId=${encodeURIComponent(urlInfo.docId)}`
-          );
-          if (!response.ok) {
-            console.warn('[resolveImageUrls] Failed to get public URL:', urlInfo.path);
-            return;
-          }
-          const data = await response.json();
-          if (!data.url) {
-            console.warn('[resolveImageUrls] No URL in response:', urlInfo.path);
-            return;
-          }
-          publicUrl = data.url;
+        if (urlInfo.type === 'disk' || urlInfo.type === 'proxy') {
+          // Use proxy API to avoid CORS issues
+          dataUrl = await fetchImageViaProxyAsDataUrl(urlInfo.path, urlInfo.docId);
+        } else if (urlInfo.type === 'public') {
+          // Try direct fetch for public URLs
+          dataUrl = await fetchImageAsDataUrl(urlInfo.path);
         }
 
-        // Fetch image and convert to data URL
-        const dataUrl = await fetchImageAsDataUrl(publicUrl);
         if (dataUrl) {
           resolvedUrls.set(urlInfo.match, dataUrl);
           console.log('[resolveImageUrls] Converted to data URL:', urlInfo.path.slice(0, 30));
+        } else {
+          console.warn('[resolveImageUrls] Failed to convert:', urlInfo.path);
         }
       } catch (error) {
         console.warn('[resolveImageUrls] Failed to resolve:', urlInfo.path, error);

@@ -99,6 +99,13 @@ test.describe('Image Upload and Export Test', () => {
     await expect(page.locator('.markdown-editor-wrapper')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Editor loaded');
 
+    // Capture console logs for debugging
+    page.on('console', msg => {
+      if (msg.text().includes('resolveImageUrls') || msg.text().includes('downloadAsWord')) {
+        console.log('[Browser]', msg.text());
+      }
+    });
+
     // Wait a bit for images to load
     await page.waitForTimeout(2000);
 
@@ -124,9 +131,10 @@ test.describe('Image Upload and Export Test', () => {
       console.log('[Test] ✅ Word downloaded:', filename);
       expect(filename).toMatch(/\.docx$/);
 
-      // Save to test-results folder for manual verification
+      // Save to test-results folder with unique name
       const fs = require('fs');
-      const savePath = `test-results/image-export-${filename}`;
+      const uniqueName = `image-export-${Date.now()}-${filename}`;
+      const savePath = `test-results/${uniqueName}`;
       await wordDownload.saveAs(savePath);
       const stats = fs.statSync(savePath);
       console.log('[Test] Word file size:', stats.size, 'bytes');
@@ -160,9 +168,10 @@ test.describe('Image Upload and Export Test', () => {
       console.log('[Test] ✅ PDF downloaded:', filename);
       expect(filename).toMatch(/\.pdf$/);
 
-      // Save to test-results folder for manual verification
+      // Save to test-results folder with unique name
       const fs = require('fs');
-      const savePath = `test-results/image-export-${filename}`;
+      const uniqueName = `image-export-${Date.now()}-${filename}`;
+      const savePath = `test-results/${uniqueName}`;
       await pdfDownload.saveAs(savePath);
       const stats = fs.statSync(savePath);
       console.log('[Test] PDF file size:', stats.size, 'bytes');
