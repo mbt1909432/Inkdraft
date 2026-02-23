@@ -15,6 +15,17 @@ npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
 
+## E2E Testing
+
+Playwright tests use port **3005** to avoid conflicts with other development servers.
+
+```bash
+npm run dev -- -p 3005    # Start dev server on port 3005 for testing
+npx playwright test       # Run E2E tests (requires server on port 3005)
+```
+
+**Important**: Always run tests on port 3005, not 3000.
+
 ## Environment Setup
 
 Copy `.env.example` to `.env.local` and configure:

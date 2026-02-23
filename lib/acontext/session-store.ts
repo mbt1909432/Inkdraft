@@ -41,6 +41,7 @@ export async function getOrCreateChatSession(options: {
 
   if (existing) {
     console.log(LOG_TAG, 'Found existing chat session', { id: existing.id });
+
     return {
       id: existing.id,
       userId: existing.user_id,

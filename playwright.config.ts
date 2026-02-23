@@ -32,7 +32,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run dev -- -p 3005',
     url: 'http://localhost:3005',
     reuseExistingServer: true,
     timeout: 120 * 1000,

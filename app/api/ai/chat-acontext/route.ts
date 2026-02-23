@@ -12,10 +12,17 @@ import {
 } from '@/lib/acontext';
 import { getOrCreateChatSession } from '@/lib/acontext/session-store';
 import { applyEditTool } from '@/lib/editor/apply-edit-tools';
+import {
+  getSandboxToolSchemas,
+  isSandboxToolName,
+  executeSandboxTool,
+  formatSandboxContext,
+  createSandbox,
+} from '@/lib/acontext/sandbox-tools';
 
 const LOG_TAG = '[api/ai/chat-acontext]';
 
-const CHAT_EDIT_SYSTEM_PROMPT = `You are an AI document editor. Your job is to DIRECTLY EDIT the user's Markdown document based on their requests. Do NOT just give advice or explain what to do - actually use the edit tools to make changes.
+const CHAT_EDIT_SYSTEM_PROMPT = `You are an AI document editor with Python code execution capabilities. Your job is to DIRECTLY EDIT the user's Markdown document based on their requests. Do NOT just give advice or explain what to do - actually use the edit tools to make changes.
 
 **Core Principle**: When users describe what they want (e.g., "help me write a CV for HKU application", "translate this to English", "add a section about my research"), you should IMMEDIATELY use tools to edit the document. Be proactive, not reactive.
 
@@ -30,10 +37,26 @@ const CHAT_EDIT_SYSTEM_PROMPT = `You are an AI document editor. Your job is to D
    - after_string: A segment that exists in the document (e.g. end of a paragraph or a heading line). Copy it exactly.
    - content: The Markdown to insert. Start with "\\n\\n" if you want a blank line before it.
 
+**Sandbox tools** (for Python code execution):
+3. **bash_execution_sandbox**: Execute bash commands in an isolated sandbox environment. Useful for running Python scripts, installing packages, or file operations.
+   - command: The bash command to execute
+   - timeout: Timeout in seconds (default: 60)
+
+4. **text_editor_sandbox**: Create, view, or edit files in the sandbox.
+   - command: "create" to write a file, "view" to read a file
+   - path: File path in the sandbox
+   - file_text: File content (for "create" command)
+
+5. **export_file_sandbox**: Export files from sandbox to permanent disk storage. Use this to save generated images or outputs.
+   - sandbox_file_path: Path to the file in sandbox
+   - disk_file_path: Where to save it on disk (e.g., "images/chart.png")
+   - Returns: disk:: URL that can be embedded in the document
+
 **When to use tools**:
-- User asks to modify, add, remove, or restructure content → USE TOOLS
-- User provides personal info to fill in → USE TOOLS to replace placeholders
-- User wants translation, formatting changes, or improvements → USE TOOLS
+- User asks to modify, add, remove, or restructure content → USE EDIT TOOLS
+- User provides personal info to fill in → USE EDIT TOOLS to replace placeholders
+- User wants translation, formatting changes, or improvements → USE EDIT TOOLS
+- User wants to run Python code or generate charts → USE SANDBOX TOOLS
 - User asks a question about the document → Reply with text (no tools needed)
 - User explicitly says "don't edit" or "just tell me" → Reply with text only
 
@@ -42,7 +65,8 @@ const CHAT_EDIT_SYSTEM_PROMPT = `You are an AI document editor. Your job is to D
 - Prefer short, unique segments so the match is unambiguous.
 - When making many changes, call multiple tools in one response. Do not split into many back-and-forth turns.
 - Output valid Markdown in new_string and content.
-- If a tool returns "applied: false" with an error (e.g. old_string not found), read the current document again and retry with the exact text from the document.`;
+- If a tool returns "applied: false" with an error (e.g. old_string not found), read the current document again and retry with the exact text from the document.
+- For generated images/charts, use export_file_sandbox to save to disk, then use insert_after to add the disk:: URL to the document.`;
 
 function buildSystemContent(documentMarkdown: string, selectionMarkdown?: string | null): string {
   const documentBlock =
@@ -167,7 +191,9 @@ export async function POST(request: Request) {
       })),
     ];
 
-    const tools = getChatEditToolSchema();
+    const editTools = getChatEditToolSchema();
+    const sandboxTools = getSandboxToolSchemas();
+    const tools = [...editTools, ...sandboxTools] as OpenAI.Chat.Completions.ChatCompletionTool[];
 
     // Create streaming completion
     const stream = await openaiClient.chat.completions.create({
@@ -252,7 +278,23 @@ export async function POST(request: Request) {
             arguments: Record<string, unknown>;
             applied: boolean;
             error?: string;
+            result?: Record<string, unknown>;
           }> = [];
+
+          // Create sandbox on-demand if any sandbox tools are called
+          let sandboxId: string | undefined;
+          const hasSandboxToolCalls = toolCalls.some(tc => tc.name && isSandboxToolName(tc.name));
+          if (hasSandboxToolCalls) {
+            try {
+              console.log(LOG_TAG, 'Creating sandbox for tool execution...');
+              const { sandboxId: newSandboxId } = await createSandbox(acontextClient);
+              sandboxId = newSandboxId;
+              console.log(LOG_TAG, 'Sandbox created', { sandboxId });
+            } catch (err) {
+              console.error(LOG_TAG, 'Failed to create sandbox', err);
+              // Continue without sandbox - will report error for sandbox tool calls
+            }
+          }
 
           for (const tc of toolCalls) {
             if (!tc.name) continue;
@@ -270,22 +312,63 @@ export async function POST(request: Request) {
               continue;
             }
 
-            const result = applyEditTool(finalDoc, tc.name, args);
-            if (result.applied) {
-              finalDoc = result.newMarkdown;
+            // Check if it's a sandbox tool
+            if (isSandboxToolName(tc.name)) {
+              if (!sandboxId) {
+                processedToolCalls.push({
+                  name: tc.name,
+                  arguments: args,
+                  applied: false,
+                  error: 'Sandbox not available. Failed to create sandbox.',
+                });
+                continue;
+              }
+
+              try {
+                console.log(LOG_TAG, 'Executing sandbox tool', { name: tc.name, args });
+                const sandboxCtx = formatSandboxContext(
+                  acontextClient,
+                  sandboxId,
+                  chatSession.acontextDiskId
+                );
+                const result = await executeSandboxTool(sandboxCtx, tc.name, args);
+                console.log(LOG_TAG, 'Sandbox tool result', { name: tc.name, result });
+
+                processedToolCalls.push({
+                  name: tc.name,
+                  arguments: args,
+                  applied: true,
+                  result,
+                });
+              } catch (err) {
+                const errorMsg = err instanceof Error ? err.message : String(err);
+                console.error(LOG_TAG, 'Sandbox tool error', { name: tc.name, error: errorMsg });
+                processedToolCalls.push({
+                  name: tc.name,
+                  arguments: args,
+                  applied: false,
+                  error: errorMsg,
+                });
+              }
+            } else {
+              // It's an edit tool
+              const result = applyEditTool(finalDoc, tc.name, args);
+              if (result.applied) {
+                finalDoc = result.newMarkdown;
+              }
+              processedToolCalls.push({
+                name: tc.name,
+                arguments: args,
+                applied: result.applied,
+                error: result.error,
+              });
             }
-            processedToolCalls.push({
-              name: tc.name,
-              arguments: args,
-              applied: result.applied,
-              error: result.error,
-            });
           }
 
           // Store assistant message
           try {
             // Build tool_calls array if present
-            const toolCalls = processedToolCalls.length > 0
+            const storedToolCalls = processedToolCalls.length > 0
               ? processedToolCalls.map((tc, idx) => ({
                   id: `tc_${Date.now()}_${idx}`,
                   type: 'function' as const,
@@ -298,33 +381,41 @@ export async function POST(request: Request) {
 
             console.log(LOG_TAG, 'Storing assistant message', {
               contentLen: (currentContent || ' ').length,
-              hasToolCalls: !!toolCalls,
-              toolCallsCount: toolCalls?.length || 0,
+              hasToolCalls: !!storedToolCalls,
+              toolCallsCount: storedToolCalls?.length || 0,
             });
 
             await storeMessage(acontextClient, chatSession.acontextSessionId, {
               role: 'assistant',
               content: currentContent || ' ',  // Ensure non-empty content
-              tool_calls: toolCalls,
+              tool_calls: storedToolCalls,
             });
             console.log(LOG_TAG, 'Assistant message stored');
 
             // CRITICAL: Store tool response messages after assistant with tool_calls
             // OpenAI API requires: Assistant (tool_calls) → Tool Response
-            if (toolCalls && toolCalls.length > 0) {
-              for (let i = 0; i < toolCalls.length; i++) {
-                const tc = toolCalls[i];
+            if (storedToolCalls && storedToolCalls.length > 0) {
+              for (let i = 0; i < storedToolCalls.length; i++) {
+                const tc = storedToolCalls[i];
                 const result = processedToolCalls[i];
-                const toolResponseContent = result.applied
+
+                // For sandbox tools, include the result; for edit tools, include applied status
+                const toolResponseContent = isSandboxToolName(tc.function.name)
                   ? JSON.stringify({
-                      applied: true,
-                      name: result.name,
-                      arguments: result.arguments,
+                      applied: result.applied,
+                      result: result.result,
+                      error: result.error,
                     })
-                  : JSON.stringify({
-                      applied: false,
-                      error: result.error || 'Edit not applied',
-                    });
+                  : (result.applied
+                    ? JSON.stringify({
+                        applied: true,
+                        name: result.name,
+                        arguments: result.arguments,
+                      })
+                    : JSON.stringify({
+                        applied: false,
+                        error: result.error || 'Edit not applied',
+                      }));
 
                 await storeMessage(acontextClient, chatSession.acontextSessionId, {
                   role: 'tool',
@@ -332,7 +423,7 @@ export async function POST(request: Request) {
                   content: toolResponseContent,
                 });
               }
-              console.log(LOG_TAG, 'Tool response messages stored', { count: toolCalls.length });
+              console.log(LOG_TAG, 'Tool response messages stored', { count: storedToolCalls.length });
             }
           } catch (err) {
             console.error(LOG_TAG, 'Failed to store assistant message', err);
