@@ -124,14 +124,14 @@ test.describe('Image Upload and Export Test', () => {
       console.log('[Test] ✅ Word downloaded:', filename);
       expect(filename).toMatch(/\.docx$/);
 
-      // Check file size (should be > 0)
-      const path = await wordDownload.path();
-      if (path) {
-        const fs = require('fs');
-        const stats = fs.statSync(path);
-        console.log('[Test] Word file size:', stats.size, 'bytes');
-        expect(stats.size).toBeGreaterThan(0);
-      }
+      // Save to test-results folder for manual verification
+      const fs = require('fs');
+      const savePath = `test-results/image-export-${filename}`;
+      await wordDownload.saveAs(savePath);
+      const stats = fs.statSync(savePath);
+      console.log('[Test] Word file size:', stats.size, 'bytes');
+      console.log('[Test] Word saved to:', savePath);
+      expect(stats.size).toBeGreaterThan(0);
     } else {
       console.log('[Test] ⚠️ Word download not triggered (might be processing)');
     }
@@ -160,14 +160,14 @@ test.describe('Image Upload and Export Test', () => {
       console.log('[Test] ✅ PDF downloaded:', filename);
       expect(filename).toMatch(/\.pdf$/);
 
-      // Check file size
-      const path = await pdfDownload.path();
-      if (path) {
-        const fs = require('fs');
-        const stats = fs.statSync(path);
-        console.log('[Test] PDF file size:', stats.size, 'bytes');
-        expect(stats.size).toBeGreaterThan(0);
-      }
+      // Save to test-results folder for manual verification
+      const fs = require('fs');
+      const savePath = `test-results/image-export-${filename}`;
+      await pdfDownload.saveAs(savePath);
+      const stats = fs.statSync(savePath);
+      console.log('[Test] PDF file size:', stats.size, 'bytes');
+      console.log('[Test] PDF saved to:', savePath);
+      expect(stats.size).toBeGreaterThan(0);
     } else {
       console.log('[Test] ⚠️ PDF download not triggered (might be processing)');
     }
