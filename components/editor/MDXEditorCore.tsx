@@ -27,6 +27,7 @@ import {
   Separator,
   type MDXEditorMethods,
 } from '@mdxeditor/editor';
+import { toast } from 'sonner';
 import { selectionToolbarPlugin } from './selectionToolbarPlugin';
 import '@mdxeditor/editor/style.css';
 import { uploadImage, diskUrlToProxyUrl, isDiskUrl } from '@/lib/upload-image';
@@ -115,12 +116,20 @@ export function MDXEditorCore({
       linkDialogPlugin(),
       imagePlugin({
         imageUploadHandler: async (file: File) => {
-          const url = await uploadImage(file, documentId);
-          // If it's a disk URL, convert to proxy URL for rendering
-          if (isDiskUrl(url)) {
-            return diskUrlToProxyUrl(url, documentId);
+          const toastId = toast.loading('正在上传图片...');
+          try {
+            const url = await uploadImage(file, documentId);
+            // If it's a disk URL, convert to proxy URL for rendering
+            if (isDiskUrl(url)) {
+              toast.success('图片上传成功', { id: toastId });
+              return diskUrlToProxyUrl(url, documentId);
+            }
+            toast.success('图片上传成功', { id: toastId });
+            return url;
+          } catch (error) {
+            toast.error('图片上传失败: ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
+            throw error;
           }
-          return url;
         },
       }),
       tablePlugin(),
