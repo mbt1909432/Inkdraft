@@ -109,6 +109,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
       }
       if (data.markdown) {
         setDraftResult(data.markdown);
+        toast.success(t('editor.draftSuccess') || '草稿生成成功');
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t('editor.draftFailed'));

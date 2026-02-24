@@ -217,8 +217,34 @@
   color: inherit;
 }
 
-.markdown-editor-wrapper [data-editor-type]::selection {
-  background: hsl(var(--editor-selection));
+/* Text selection styles - must target contenteditable elements directly */
+.markdown-editor-wrapper ::selection,
+.markdown-editor-wrapper [contenteditable="true"]::selection,
+.markdown-editor-wrapper .mdxeditor-root-contenteditable::selection,
+.markdown-editor-wrapper .prose ::selection {
+  background: hsl(var(--editor-selection)) !important;
+  color: inherit;
+}
+
+/* Light mode selection (higher contrast) */
+:root .markdown-editor-wrapper ::selection {
+  background: hsl(210 100% 85%) !important;
+}
+
+/* Dark mode selection */
+.dark .markdown-editor-wrapper ::selection {
+  background: hsl(210 60% 50%) !important;
+  color: hsl(0 0% 100%) !important;
+}
+
+/* Guofeng theme selection */
+.guofeng .markdown-editor-wrapper ::selection {
+  background: hsl(40 35% 80%) !important;
+}
+
+/* Sepia theme selection */
+.sepia .markdown-editor-wrapper ::selection {
+  background: hsl(40 50% 75%) !important;
 }
 
 /* MDXEditor Toolbar Styles */

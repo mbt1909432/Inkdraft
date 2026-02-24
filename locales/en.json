@@ -97,7 +97,8 @@
       "acceptAndReplace": "Accept and replace",
       "close": "Close"
     },
-    "draftFailed": "Draft failed"
+    "draftFailed": "Draft failed",
+    "draftSuccess": "Draft generated successfully"
   },
   "sidebar": {
     "searchDocuments": "Search documents…",

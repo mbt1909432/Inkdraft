@@ -76,15 +76,18 @@ export default function EditorPage() {
 
   const handleCreateDocument = async (folderId?: string | null, template?: { name: string; content: string }) => {
     setIsCreating(true);
+    const toastId = toast.loading('创建文档中...');
     try {
       console.log('[handleCreateDocument] Creating document...', template ? 'with template' : 'blank');
       const doc = await createNewDocument(folderId, template ? { title: template.name, content: template.content } : undefined);
       console.log('[handleCreateDocument] Document created:', { id: doc.id, title: doc.title });
+      toast.success('文档创建成功', { id: toastId });
       console.log('[handleCreateDocument] Navigating to:', `/document/${doc.id}`);
       // Use window.location.href for a full page load to avoid client-side routing issues
       window.location.href = `/document/${doc.id}`;
     } catch (error) {
       console.error('Error creating document:', error);
+      toast.error('创建文档失败: ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
     } finally {
       setIsCreating(false);
     }
@@ -102,10 +105,13 @@ export default function EditorPage() {
   const handleCreateFolder = async (parentId?: string | null) => {
     const name = prompt('输入文件夹名称:');
     if (name?.trim()) {
+      const toastId = toast.loading('创建文件夹中...');
       try {
         await createNewFolder(name.trim(), parentId);
+        toast.success('文件夹创建成功', { id: toastId });
       } catch (error) {
         console.error('Error creating folder:', error);
+        toast.error('创建文件夹失败: ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
       }
     }
   };
@@ -142,18 +148,24 @@ export default function EditorPage() {
   };
 
   const handleRenameFolder = async (id: string, name: string) => {
+    const toastId = toast.loading('重命名中...');
     try {
       await renameFolder(id, name);
+      toast.success('文件夹已重命名', { id: toastId });
     } catch (error) {
       console.error('Error renaming folder:', error);
+      toast.error('重命名失败: ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
     }
   };
 
   const handleRenameDocument = async (id: string, title: string) => {
+    const toastId = toast.loading('重命名中...');
     try {
       await renameDocument(id, title);
+      toast.success('文档已重命名', { id: toastId });
     } catch (error) {
       console.error('Error renaming document:', error);
+      toast.error('重命名失败: ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
     }
   };
 
@@ -167,10 +179,13 @@ export default function EditorPage() {
 
   const handleTogglePin = async () => {
     if (currentDocument) {
+      const toastId = toast.loading('切换置顶中...');
       try {
         await pinDocument(currentDocument.id);
+        toast.success('置顶状态已更新', { id: toastId });
       } catch (error) {
         console.error('Error toggling pin:', error);
+        toast.error('操作失败: ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
       }
     }
   };

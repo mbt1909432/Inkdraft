@@ -97,7 +97,8 @@
       "acceptAndReplace": "接受并替换",
       "close": "关闭"
     },
-    "draftFailed": "起稿失败"
+    "draftFailed": "起稿失败",
+    "draftSuccess": "草稿生成成功"
   },
   "sidebar": {
     "searchDocuments": "搜索文档…",

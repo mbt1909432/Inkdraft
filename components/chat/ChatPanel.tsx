@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Loader2, Send, MessageSquare, X, Check, Ban, StopCircle, History } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { applyEditTool } from '@/lib/editor/apply-edit-tools';
 import { sanitizeHtml } from '@/lib/chat/sanitize-html';
@@ -76,7 +77,7 @@ function ToolCallBlock({
   toolIndex?: number;
   onChoice?: (messageId: string, toolIndex: number, choice: 'apply' | 'decline') => void;
 }) {
-  const { name, arguments: args, applied, userChoice } = tool;
+  const { name, arguments: args, applied, userChoice, error } = tool;
   const nameLabel = name === 'search_replace' ? 'search_replace（替换）' : name === 'insert_after' ? 'insert_after（插入）' : name;
   const statusLabel = pending
     ? userChoice === 'apply'
@@ -88,13 +89,17 @@ function ToolCallBlock({
       ? '已应用'
       : userChoice === 'decline'
         ? '未应用'
-        : '未匹配';
+        : error
+          ? `匹配失败: ${error}`
+          : '未匹配';
   const statusColor =
     userChoice === 'apply' || (applied && !pending)
       ? 'text-green-600 dark:text-green-400'
-      : userChoice === 'decline' || (!applied && !pending)
-        ? 'text-muted-foreground'
-        : 'text-amber-600 dark:text-amber-400';
+      : error
+        ? 'text-red-600 dark:text-red-400'
+        : userChoice === 'decline' || (!applied && !pending)
+          ? 'text-muted-foreground'
+          : 'text-amber-600 dark:text-amber-400';
   const canClick = pending && messageId != null && toolIndex != null && onChoice;
 
   return (
@@ -160,6 +165,8 @@ export interface ToolCallDisplay {
   applied?: boolean;
   /** 用户选择：应用 / 不应用；确认后用于显示「已应用」「未应用」 */
   userChoice?: 'apply' | 'decline';
+  /** Error message if tool failed to apply */
+  error?: string;
 }
 
 export interface ChatMessage {
@@ -266,6 +273,7 @@ export function ChatPanel({
         }
       } catch (error) {
         console.error('[ChatPanel] Error loading history:', error);
+        toast.error('加载聊天记录失败');
       } finally {
         setIsLoadingHistory(false);
       }
@@ -291,14 +299,17 @@ export function ChatPanel({
     const base = msg.initialMarkdown ?? msg.pendingNewMarkdown ?? getMarkdown();
     let currentMarkdown = base;
     const appliedPerTool: boolean[] = [];
+    const errorsPerTool: (string | undefined)[] = [];
     for (let i = 0; i < msg.toolCalls.length; i++) {
       const tc = msg.toolCalls[i];
       if (tc.userChoice !== 'apply') {
         appliedPerTool.push(false);
+        errorsPerTool.push(undefined);
         continue;
       }
       const result = applyEditTool(currentMarkdown, tc.name, tc.arguments);
       appliedPerTool.push(result.applied);
+      errorsPerTool.push(result.error);
       if (result.applied) currentMarkdown = result.newMarkdown;
     }
     setMarkdown(currentMarkdown);
@@ -313,6 +324,7 @@ export function ChatPanel({
         const toolCalls = (m.toolCalls ?? []).map((t, i) => ({
           ...t,
           applied: appliedPerTool[i] ?? t.applied,
+          error: errorsPerTool[i] ?? t.error,
         }));
         return {
           ...m,
@@ -408,6 +420,7 @@ export function ChatPanel({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        toast.error('请求失败: ' + (data.error ?? '未知错误'));
         setMessages((prev) => [
           ...prev,
           {
@@ -510,6 +523,7 @@ export function ChatPanel({
         arguments: tc.arguments,
         applied: tc.applied,
         userChoice: 'apply' as const,
+        error: tc.error,
       }));
 
       const appliedCount = toolCallsDisplay.filter((t) => t.applied).length;
@@ -545,6 +559,7 @@ export function ChatPanel({
         ]);
       } else {
         const message = err instanceof Error ? err.message : String(err);
+        toast.error('发送失败: ' + message);
         setMessages((prev) => [
           ...prev,
             {
