@@ -85,12 +85,12 @@ function parseToolResult(result: string): Record<string, unknown> {
 
 /**
  * Execute bash command in sandbox
- * @param timeout - Timeout in SECONDS (default: 120 seconds)
+ * @param timeout - Timeout in MILLISECONDS (default: 120000 = 120 seconds)
  */
 export async function executeBashCommand(
   ctx: SandboxContext,
   command: string,
-  timeout: number = 120
+  timeout: number = 120000
 ): Promise<BashExecutionResult> {
   console.log(LOG_TAG, 'Executing bash command:', command.slice(0, 100));
 
@@ -261,28 +261,28 @@ export async function executeSandboxTool(
 ): Promise<Record<string, unknown>> {
   console.log(LOG_TAG, 'Executing tool:', toolName, args);
 
-  // IMPORTANT: Acontext SDK expects timeout in SECONDS, not milliseconds!
-  // If AI passes a large number (> 1000), it's likely in milliseconds - convert to seconds
-  // Default to 120 seconds for data analysis tasks
+  // IMPORTANT: Acontext API expects timeout in MILLISECONDS!
+  // SDK tool description says "seconds" but the actual API expects milliseconds.
+  // Default to 120 seconds (120000ms) for data analysis tasks
   if (toolName === 'bash_execution_sandbox') {
     const currentTimeout = args.timeout;
     if (typeof currentTimeout === 'number') {
       let newTimeout = currentTimeout;
-      if (currentTimeout > 1000) {
-        // Convert from milliseconds to seconds
-        newTimeout = Math.ceil(currentTimeout / 1000);
-        console.log(LOG_TAG, 'Converted timeout from ms to seconds:', newTimeout);
+      // If timeout looks like seconds (< 1000), convert to milliseconds
+      if (currentTimeout < 1000) {
+        newTimeout = currentTimeout * 1000;
+        console.log(LOG_TAG, 'Converted timeout from seconds to ms:', newTimeout);
       }
-      // If timeout is too short (< 10 seconds), increase to 120 seconds
-      if (newTimeout < 10) {
-        newTimeout = 120;
+      // If timeout is too short (< 60 seconds), increase to 120 seconds
+      if (newTimeout < 60000) {
+        newTimeout = 120000;
         console.log(LOG_TAG, 'Increased timeout to 120 seconds for data analysis');
       }
       args = { ...args, timeout: newTimeout };
     } else {
-      // Default timeout: 120 seconds
-      args = { ...args, timeout: 120 };
-      console.log(LOG_TAG, 'Set default timeout to 120 seconds');
+      // Default timeout: 120 seconds (120000ms)
+      args = { ...args, timeout: 120000 };
+      console.log(LOG_TAG, 'Set default timeout to 120 seconds (120000ms)');
     }
   }
 
