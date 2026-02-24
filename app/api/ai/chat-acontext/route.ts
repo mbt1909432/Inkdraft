@@ -213,7 +213,16 @@ export async function POST(request: Request) {
     }
 
     // Load message history from Acontext
-    let history: Array<{ role: string; content: string; tool_calls?: unknown }> = [];
+    let history: Array<{
+      role: string;
+      content: string;
+      tool_calls?: Array<{
+        id: string;
+        type: string;
+        function: { name: string; arguments: string };
+      }>;
+      tool_call_id?: string;
+    }> = [];
     try {
       history = await getMessages(acontextClient, chatSession.acontextSessionId, { limit: 50 });
       console.log(LOG_TAG, 'History loaded', { count: history.length });
@@ -223,23 +232,30 @@ export async function POST(request: Request) {
 
     // Build initial messages for OpenAI
     const systemContent = buildSystemContent(documentMarkdown, selectionMarkdown);
-    let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: 'system', content: systemContent },
-      ...history.map((m) => {
-        const msg: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
-          role: m.role as 'user' | 'assistant' | 'tool',
+    const historyMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = history.map((m) => {
+      if (m.role === 'tool') {
+        return {
+          role: 'tool' as const,
+          tool_call_id: m.tool_call_id || '',
           content: m.content || '',
         };
-        // CRITICAL: Preserve tool_calls for assistant messages
-        if (m.role === 'assistant' && m.tool_calls) {
-          (msg as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam).tool_calls = m.tool_calls;
-        }
-        // CRITICAL: Preserve tool_call_id for tool messages
-        if (m.role === 'tool' && m.tool_call_id) {
-          (msg as OpenAI.Chat.Completions.ChatCompletionToolMessageParam).tool_call_id = m.tool_call_id;
-        }
-        return msg;
-      }),
+      }
+      if (m.role === 'assistant' && m.tool_calls) {
+        return {
+          role: 'assistant' as const,
+          content: m.content || '',
+          tool_calls: m.tool_calls as OpenAI.Chat.Completions.ChatCompletionMessageToolCall[],
+        };
+      }
+      return {
+        role: m.role as 'user' | 'assistant' | 'system',
+        content: m.content || '',
+      };
+    });
+
+    let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: 'system', content: systemContent },
+      ...historyMessages,
     ];
 
     const editTools = getChatEditToolSchema();
