@@ -296,6 +296,9 @@ export async function POST(request: Request) {
             }
           }
 
+          // Track if a sandbox tool failed (to skip dependent edit tools)
+          let sandboxFailed = false;
+
           for (const tc of toolCalls) {
             if (!tc.name) continue;
 
@@ -321,6 +324,7 @@ export async function POST(request: Request) {
                   applied: false,
                   error: 'Sandbox not available. Failed to create sandbox.',
                 });
+                sandboxFailed = true;
                 continue;
               }
 
@@ -334,12 +338,23 @@ export async function POST(request: Request) {
                 const result = await executeSandboxTool(sandboxCtx, tc.name, args);
                 console.log(LOG_TAG, 'Sandbox tool result', { name: tc.name, result });
 
-                processedToolCalls.push({
-                  name: tc.name,
-                  arguments: args,
-                  applied: true,
-                  result,
-                });
+                // Check if the result indicates an error
+                if (result.error) {
+                  processedToolCalls.push({
+                    name: tc.name,
+                    arguments: args,
+                    applied: false,
+                    error: String(result.error),
+                  });
+                  sandboxFailed = true;
+                } else {
+                  processedToolCalls.push({
+                    name: tc.name,
+                    arguments: args,
+                    applied: true,
+                    result,
+                  });
+                }
               } catch (err) {
                 const errorMsg = err instanceof Error ? err.message : String(err);
                 console.error(LOG_TAG, 'Sandbox tool error', { name: tc.name, error: errorMsg });
@@ -349,9 +364,21 @@ export async function POST(request: Request) {
                   applied: false,
                   error: errorMsg,
                 });
+                sandboxFailed = true;
               }
             } else {
-              // It's an edit tool
+              // It's an edit tool - skip if a previous sandbox tool failed
+              if (sandboxFailed) {
+                console.log(LOG_TAG, 'Skipping edit tool due to previous sandbox failure', { name: tc.name });
+                processedToolCalls.push({
+                  name: tc.name,
+                  arguments: args,
+                  applied: false,
+                  error: 'Skipped: previous sandbox tool failed',
+                });
+                continue;
+              }
+
               const result = applyEditTool(finalDoc, tc.name, args);
               if (result.applied) {
                 finalDoc = result.newMarkdown;
