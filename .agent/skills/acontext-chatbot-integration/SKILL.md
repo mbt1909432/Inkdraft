@@ -216,6 +216,29 @@ const result = await DISK_TOOLS.execute_tool(ctx, "write_file_disk", {
 | `text_editor_sandbox` | View, create, edit text files |
 | `export_file_sandbox` | Export files to disk with download URL |
 
+**CRITICAL: Sandbox does NOT support multi-line input or heredoc syntax!**
+
+The sandbox environment cannot handle heredoc syntax like `python - << 'EOF'`. You MUST follow this pattern:
+
+```ts
+// CORRECT: Create file first, then execute
+// Step 1: Create Python file
+await SANDBOX_TOOLS.execute_tool(ctx, "text_editor_sandbox", {
+  command: "create",
+  path: "script.py",
+  file_text: "print('Hello, World!')"
+});
+
+// Step 2: Execute the file
+await SANDBOX_TOOLS.execute_tool(ctx, "bash_execution_sandbox", {
+  command: "python3 script.py",
+  timeout: 30
+});
+
+// WRONG: Heredoc syntax will hang!
+// DO NOT USE: command: "python - << 'EOF'\ncode\nEOF"
+```
+
 ```ts
 import { SANDBOX_TOOLS } from "@acontext/acontext";
 
@@ -253,20 +276,43 @@ const result = await client.disks.artifacts.get(disk.id, {
 
 ## disk:: Protocol
 
-Use `disk::` for permanent image references instead of expiring URLs.
+Use `disk::` for permanent image references instead of expiring S3 presigned URLs (~1 hour expiry).
+
+**Why disk::?**
+- S3 presigned URLs expire after ~1 hour
+- `disk::` paths are permanent references that get fresh URLs on each render
+- Store `disk::` in DB, convert to proxy URL for rendering
 
 **Tool Output:**
 ```ts
-{ diskPath: "disk::figures/2026-02-17/chart.png" }
+{ diskPath: "disk::artifacts/chart.png" }
 ```
 
-**Frontend Rewrite:**
+**Frontend Transform:**
 ```ts
-const pattern = /disk::\s*([A-Za-z0-9/_-]+\.(?:png|jpg|jpeg|webp|gif))/gi;
-content.replace(pattern, (_, path) =>
-  `/api/artifacts/public-url?filePath=${path}&diskId=${diskId}`
-);
+// Transform disk:: to proxy URL for rendering
+function transformDiskUrlsToProxy(markdown: string, documentId: string): string {
+  return markdown.replace(
+    /!\[([^\]]*)\]\(disk::([^)]+)\)/g,
+    (match, alt, path) => {
+      const proxyUrl = `/api/images/proxy?path=${encodeURIComponent(path)}&documentId=${documentId}`;
+      return `![${alt}](${proxyUrl})`;
+    }
+  );
+}
+
+// Transform proxy URL back to disk:: for storage
+function transformProxyUrlsToDisk(markdown: string, documentId: string): string {
+  // ... reverse transformation
+}
 ```
+
+**Important Pitfalls:**
+1. SDK may not return `disk_path` - build default path `artifacts/{filename}`
+2. AI may use wrong parameter name (`filename` vs `sandbox_filename`) - handle both
+3. Transform BEFORE markdown parsing, not after
+
+See **[Disk Path Mapping](references/disk-path-mapping.md)** for complete implementation guide.
 
 ## Critical: Message Sequence for Tool Calls
 
@@ -387,6 +433,7 @@ See reference files for detailed implementations:
 - **[Session Cleanup](references/session-cleanup.md)** - Delete sessions, batch cleanup
 - **[Debugging](references/debugging.md)** - Logging format, common issues
 - **[Troubleshooting](references/troubleshooting.md)** - 404 errors, tool sequence errors
+- **[Disk Path Mapping](references/disk-path-mapping.md)** - disk:: protocol, URL expiration, frontend transformation
 - **[Skill System](references/skill-system.md)** - Mount Acontext skills into sandboxes
 - **[API Reference](references/api-reference.md)** - Complete SDK method reference
 - **[Implementation](references/implementation.md)** - Full code examples

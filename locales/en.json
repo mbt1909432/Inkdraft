@@ -142,5 +142,69 @@
     "hasAccount": "Already have an account?",
     "signUpSuccess": "Verification email sent. Check your inbox to complete sign up.",
     "authFailed": "Something went wrong"
+  },
+  "chat": {
+    "title": "AI Assistant",
+    "loadingHistory": "Loading history...",
+    "messageCount": "messages",
+    "inputPlaceholder": "Enter instructions to edit the document, e.g.: \"Make the second paragraph more formal\", \"Add a note under 2.1: Manage time wisely\"",
+    "inputPlaceholderShort": "Enter instructions…",
+    "send": "Send",
+    "cancel": "Cancel",
+    "collapsed": "Collapse",
+    "expandAll": "Expand all",
+    "lines": "lines",
+    "tools": {
+      "title": "Tool Calls",
+      "searchReplace": "search_replace (replace)",
+      "insertAfter": "insert_after (insert)",
+      "bashExecution": "bash_execution (run command)",
+      "textEditor": "text_editor (create file)",
+      "exportFile": "export_file (export file)"
+    },
+    "status": {
+      "executed": "Executed",
+      "failed": "Failed",
+      "pending": "Pending",
+      "executing": "Executing…",
+      "success": "Success"
+    },
+    "edit": {
+      "selectedApply": "Selected: Apply",
+      "selectedSkip": "Selected: Skip",
+      "canApply": "Can apply",
+      "applied": "Applied",
+      "skipped": "Skipped",
+      "matchFailed": "Match failed",
+      "notMatched": "Not matched",
+      "apply": "Apply",
+      "skip": "Skip",
+      "result": "Result"
+    },
+    "confirm": {
+      "hint": "Choose \"Apply\" or \"Skip\" for each edit, then:",
+      "confirmApply": "Confirm Apply",
+      "places": "places",
+      "cancelled": "Cancelled",
+      "appliedCount": "Applied {count} edits",
+      "cancelledHint": "Cancelled, no changes made"
+    },
+    "loop": {
+      "processing": "Processing",
+      "completed": "Completed {count} operations"
+    },
+    "streaming": {
+      "editing": "Executing {count} edit operations…",
+      "thinking": "Thinking…"
+    },
+    "error": {
+      "loadFailed": "Failed to load chat history",
+      "requestFailed": "Request failed",
+      "unknownError": "Unknown error",
+      "sendFailed": "Send failed"
+    },
+    "empty": {
+      "toolOnly": "(Tool calls only, no additional explanation)"
+    }
   }
 }

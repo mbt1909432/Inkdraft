@@ -10,6 +10,11 @@
  * - Automatic file upload/download to/from Disk
  * - Returns diskPath for frontend image rendering
  *
+ * CRITICAL: Sandbox does NOT support multi-line input or heredoc syntax!
+ * - DO NOT use heredoc syntax like `python - << 'EOF'` - it will hang
+ * - DO NOT use `python3 -c "multi\nline\ncode"` - it will fail
+ * - ALWAYS: Create a .py file first, then execute `python3 script.py`
+ *
  * Dependencies: @acontext/acontext, zod
  * Copy to your project and adjust as needed.
  */

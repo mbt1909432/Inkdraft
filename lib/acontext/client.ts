@@ -92,6 +92,7 @@ export async function storeMessage(
 
 /**
  * Get messages from session with optional formatting
+ * Returns ALL messages including tool responses (needed to show execution results)
  */
 export async function getMessages(
   client: AcontextClient,
@@ -105,9 +106,9 @@ export async function getMessages(
 
   if (!result?.items) return [];
 
-  // Filter out tool messages for display (they're used internally)
-  const items = result.items as AcontextMessage[];
-  return items.filter((m) => m.role !== 'tool');
+  // Return ALL messages including tool responses
+  // Frontend needs tool responses to show execution results (applied, error, result)
+  return result.items as AcontextMessage[];
 }
 
 /**
