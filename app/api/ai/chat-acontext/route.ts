@@ -40,7 +40,7 @@ const CHAT_EDIT_SYSTEM_PROMPT = `You are an AI document editor with Python code 
 **Sandbox tools** (for Python code execution):
 3. **bash_execution_sandbox**: Execute bash commands in an isolated sandbox environment. Useful for running Python scripts, installing packages, or file operations.
    - command: The bash command to execute
-   - timeout: Timeout in milliseconds (default: 60000 = 60 seconds)
+   - timeout: Timeout in SECONDS (default: 120 seconds)
 
 4. **text_editor_sandbox**: Create, view, or edit files in the sandbox.
    - command: "create" to write a file, "view" to read a file

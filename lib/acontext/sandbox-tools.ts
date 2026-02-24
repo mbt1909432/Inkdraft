@@ -85,12 +85,12 @@ function parseToolResult(result: string): Record<string, unknown> {
 
 /**
  * Execute bash command in sandbox
- * @param timeout - Timeout in milliseconds (default: 60000 = 60 seconds)
+ * @param timeout - Timeout in SECONDS (default: 120 seconds)
  */
 export async function executeBashCommand(
   ctx: SandboxContext,
   command: string,
-  timeout: number = 60000
+  timeout: number = 120
 ): Promise<BashExecutionResult> {
   console.log(LOG_TAG, 'Executing bash command:', command.slice(0, 100));
 
@@ -261,22 +261,41 @@ export async function executeSandboxTool(
 ): Promise<Record<string, unknown>> {
   console.log(LOG_TAG, 'Executing tool:', toolName, args);
 
-  // Safeguard: if timeout is a small number (< 1000), assume it's in seconds and convert to ms
-  // This handles cases where AI passes timeout in seconds (e.g., 60) instead of milliseconds (60000)
-  if (toolName === 'bash_execution_sandbox' && typeof args.timeout === 'number') {
-    if (args.timeout < 1000) {
-      args = { ...args, timeout: args.timeout * 1000 };
-      console.log(LOG_TAG, 'Converted timeout from seconds to ms:', args.timeout);
+  // IMPORTANT: Acontext SDK expects timeout in SECONDS, not milliseconds!
+  // If AI passes a large number (> 1000), it's likely in milliseconds - convert to seconds
+  // Default to 120 seconds for data analysis tasks
+  if (toolName === 'bash_execution_sandbox') {
+    const currentTimeout = args.timeout;
+    if (typeof currentTimeout === 'number') {
+      let newTimeout = currentTimeout;
+      if (currentTimeout > 1000) {
+        // Convert from milliseconds to seconds
+        newTimeout = Math.ceil(currentTimeout / 1000);
+        console.log(LOG_TAG, 'Converted timeout from ms to seconds:', newTimeout);
+      }
+      // If timeout is too short (< 10 seconds), increase to 120 seconds
+      if (newTimeout < 10) {
+        newTimeout = 120;
+        console.log(LOG_TAG, 'Increased timeout to 120 seconds for data analysis');
+      }
+      args = { ...args, timeout: newTimeout };
+    } else {
+      // Default timeout: 120 seconds
+      args = { ...args, timeout: 120 };
+      console.log(LOG_TAG, 'Set default timeout to 120 seconds');
     }
   }
 
+  console.log(LOG_TAG, 'Formatting context...');
   const formattedCtx = await SANDBOX_TOOLS.formatContext(
     ctx.acontextClient,
     ctx.sandboxId,
     ctx.diskId
   );
+  console.log(LOG_TAG, 'Context formatted, executing tool...');
 
   const resultStr = await SANDBOX_TOOLS.executeTool(formattedCtx, toolName, args);
+  console.log(LOG_TAG, 'Tool execution completed, parsing result...');
 
   const result = parseToolResult(resultStr);
 
