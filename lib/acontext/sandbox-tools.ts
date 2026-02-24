@@ -85,11 +85,12 @@ function parseToolResult(result: string): Record<string, unknown> {
 
 /**
  * Execute bash command in sandbox
+ * @param timeout - Timeout in milliseconds (default: 60000 = 60 seconds)
  */
 export async function executeBashCommand(
   ctx: SandboxContext,
   command: string,
-  timeout: number = 60
+  timeout: number = 60000
 ): Promise<BashExecutionResult> {
   console.log(LOG_TAG, 'Executing bash command:', command.slice(0, 100));
 
@@ -259,6 +260,15 @@ export async function executeSandboxTool(
   args: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
   console.log(LOG_TAG, 'Executing tool:', toolName, args);
+
+  // Safeguard: if timeout is a small number (< 1000), assume it's in seconds and convert to ms
+  // This handles cases where AI passes timeout in seconds (e.g., 60) instead of milliseconds (60000)
+  if (toolName === 'bash_execution_sandbox' && typeof args.timeout === 'number') {
+    if (args.timeout < 1000) {
+      args = { ...args, timeout: args.timeout * 1000 };
+      console.log(LOG_TAG, 'Converted timeout from seconds to ms:', args.timeout);
+    }
+  }
 
   const formattedCtx = await SANDBOX_TOOLS.formatContext(
     ctx.acontextClient,
