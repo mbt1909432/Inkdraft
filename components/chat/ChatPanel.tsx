@@ -246,28 +246,52 @@ export function ChatPanel({
         }
 
         if (data.messages && data.messages.length > 0) {
+          // Build a map of tool_call_id -> tool response (applied, error)
+          const toolResponses = new Map<string, { applied: boolean; error?: string }>();
+          for (const m of data.messages) {
+            if (m.role === 'tool' && m.tool_call_id) {
+              try {
+                const responseContent = JSON.parse(m.content || '{}');
+                toolResponses.set(m.tool_call_id, {
+                  applied: responseContent.applied ?? false,
+                  error: responseContent.error,
+                });
+              } catch {
+                // Ignore parse errors
+              }
+            }
+          }
+
+          // Only include user and assistant messages (not tool responses)
           setMessages(
-            data.messages.map((m: {
-              role: string;
-              content: string;
-              id?: string;
-              tool_calls?: Array<{
-                id: string;
-                type: 'function';
-                function: { name: string; arguments: string };
-              }>;
-            }, idx: number) => ({
-              id: m.id || `loaded-${idx}`,
-              role: m.role as 'user' | 'assistant',
-              content: m.content,
-              // Include tool_calls if present (from Acontext history)
-              toolCalls: m.tool_calls?.map(tc => ({
-                name: tc.function.name,
-                arguments: JSON.parse(tc.function.arguments || '{}'),
-                applied: true,  // Assume applied since it's in history
-                userChoice: 'apply' as const,
-              })),
-            }))
+            data.messages
+              .filter((m: { role: string }) => m.role === 'user' || m.role === 'assistant')
+              .map((m: {
+                role: string;
+                content: string;
+                id?: string;
+                tool_calls?: Array<{
+                  id: string;
+                  type: 'function';
+                  function: { name: string; arguments: string };
+                }>;
+              }, idx: number) => ({
+                id: m.id || `loaded-${idx}`,
+                role: m.role as 'user' | 'assistant',
+                content: m.content,
+                // Include tool_calls if present (from Acontext history)
+                toolCalls: m.tool_calls?.map((tc, tcIdx) => {
+                  // Look up the tool response for this tool call
+                  const response = toolResponses.get(tc.id);
+                  return {
+                    name: tc.function.name,
+                    arguments: JSON.parse(tc.function.arguments || '{}'),
+                    applied: response?.applied ?? true,
+                    error: response?.error,
+                    userChoice: (response?.applied ?? true) ? 'apply' as const : undefined,
+                  };
+                }),
+              }))
           );
           console.log('[ChatPanel] Loaded', data.messages.length, 'messages from Acontext');
         }
