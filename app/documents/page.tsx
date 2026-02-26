@@ -125,7 +125,11 @@ export default function EditorPage() {
     const toastId = toast.loading(t('documents.importing'));
 
     try {
-      const content = await file.text();
+      let content = await file.text();
+
+      // Fix code blocks without language identifier
+      // Match ``` followed by optional whitespace and newline (no language)
+      content = content.replace(/^```\s*$/gm, '```text');
 
       // Extract title from filename (remove extension)
       const title = file.name.replace(/\.(md|markdown)$/i, '');
