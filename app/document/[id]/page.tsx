@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useMemo } from 'react';
+import { Suspense, useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useDocument } from '@/hooks/useDocument';
@@ -26,6 +26,7 @@ import { SaveToast, type SaveToastType } from '@/components/SaveToast';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { MobileChat } from '@/components/chat/MobileChat';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { useTranslations } from '@/contexts/LocaleContext';
 
 /** Supabase document id is UUID; reject placeholders like %%drp:id:xxx%% */
 function isValidDocumentId(id: string): boolean {
@@ -37,6 +38,9 @@ export default function DocumentPage() {
   const params = useParams();
   const router = useRouter();
   const isMobile = useIsMobile();
+  const t = useTranslations();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   // WORKAROUND: useParams() is returning incorrect values in production.
   // Parse the document ID directly from the URL pathname instead.
@@ -204,6 +208,45 @@ export default function DocumentPage() {
     }
   };
 
+  const handleImportMarkdown = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset file input so the same file can be selected again
+    e.target.value = '';
+
+    // Check file extension
+    if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
+      toast.error(t('documents.importFailed') + ': ' + (file.name.endsWith('.txt') ? 'Please use .md or .markdown file' : 'Invalid file type'));
+      return;
+    }
+
+    setIsImporting(true);
+    const toastId = toast.loading(t('documents.importing'));
+
+    try {
+      const content = await file.text();
+
+      // Extract title from filename (remove extension)
+      const title = file.name.replace(/\.(md|markdown)$/i, '');
+
+      const doc = await createNewDocument(null, { title, content });
+      toast.success(t('documents.importSuccess'), { id: toastId });
+
+      // Navigate to the new document
+      window.location.href = `/document/${doc.id}`;
+    } catch (error) {
+      console.error('Error importing markdown:', error);
+      toast.error(t('documents.importFailed') + ': ' + (error instanceof Error ? error.message : 'Unknown error'), { id: toastId });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const handleSelectDocument = (id: string) => {
     // Use window.location.href for a full page load to avoid client-side routing issues
     window.location.href = `/document/${id}`;
@@ -309,6 +352,7 @@ export default function DocumentPage() {
         <MobileSidebar
           onCreateDocument={handleCreateDocument}
           onCreateFolder={handleCreateFolder}
+          onImportMarkdown={handleImportMarkdown}
           onDeleteDocument={handleDeleteDocument}
           onDeleteFolder={handleDeleteFolder}
           onRenameFolder={handleRenameFolder}
@@ -327,6 +371,7 @@ export default function DocumentPage() {
             <Sidebar
               onCreateDocument={handleCreateDocument}
               onCreateFolder={handleCreateFolder}
+              onImportMarkdown={handleImportMarkdown}
               onDeleteDocument={handleDeleteDocument}
               onDeleteFolder={handleDeleteFolder}
               onRenameFolder={handleRenameFolder}
@@ -430,6 +475,15 @@ export default function DocumentPage() {
 
       {/* 保存状态提示 */}
       <SaveToast type={saveToast} />
+
+      {/* Hidden file input for markdown import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".md,.markdown"
+        onChange={handleFileChange}
+        className="hidden"
+      />
     </div>
   );
 }

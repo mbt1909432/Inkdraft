@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useTranslations } from '@/contexts/LocaleContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import {
   Pin,
   Loader2,
   FileStack,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -37,6 +38,7 @@ import type { DocumentTemplate } from '@/lib/templates';
 interface SidebarProps {
   onCreateDocument?: (folderId?: string | null, template?: { name: string; content: string }) => Promise<void>;
   onCreateFolder?: (parentId?: string | null) => Promise<void>;
+  onImportMarkdown?: (folderId?: string | null) => void;
   onDeleteDocument?: (id: string) => Promise<void>;
   onDeleteFolder?: (id: string) => Promise<void>;
   onRenameFolder?: (id: string, name: string) => Promise<void>;
@@ -47,6 +49,7 @@ interface SidebarProps {
 export function Sidebar({
   onCreateDocument,
   onCreateFolder,
+  onImportMarkdown,
   onDeleteDocument,
   onDeleteFolder,
   onRenameFolder,
@@ -188,11 +191,15 @@ export function Sidebar({
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuItem onClick={handleCreateDocument}>
                 <FileText className="h-4 w-4 mr-2" />
-                空白文档
+                {t('documents.blankDocument')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTemplatePickerOpen(true)}>
                 <FileStack className="h-4 w-4 mr-2" />
-                从模板创建
+                {t('documents.fromTemplate')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onImportMarkdown?.(activeFolderId)}>
+                <Upload className="h-4 w-4 mr-2" />
+                {t('documents.importMarkdown')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

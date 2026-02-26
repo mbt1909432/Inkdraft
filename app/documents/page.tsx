@@ -258,6 +258,7 @@ export default function EditorPage() {
         <Sidebar
           onCreateDocument={handleCreateDocument}
           onCreateFolder={handleCreateFolder}
+          onImportMarkdown={handleImportMarkdown}
           onDeleteDocument={handleDeleteDocument}
           onDeleteFolder={handleDeleteFolder}
           onRenameFolder={handleRenameFolder}

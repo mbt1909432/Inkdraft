@@ -11,6 +11,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 interface MobileSidebarProps {
   onCreateDocument?: (folderId?: string | null, template?: { name: string; content: string }) => Promise<void>;
   onCreateFolder?: (parentId?: string | null) => Promise<void>;
+  onImportMarkdown?: (folderId?: string | null) => void;
   onDeleteDocument?: (id: string) => Promise<void>;
   onDeleteFolder?: (id: string) => Promise<void>;
   onRenameFolder?: (id: string, name: string) => Promise<void>;
@@ -21,6 +22,7 @@ interface MobileSidebarProps {
 export function MobileSidebar({
   onCreateDocument,
   onCreateFolder,
+  onImportMarkdown,
   onDeleteDocument,
   onDeleteFolder,
   onRenameFolder,
@@ -50,6 +52,7 @@ export function MobileSidebar({
         <Sidebar
           onCreateDocument={onCreateDocument}
           onCreateFolder={onCreateFolder}
+          onImportMarkdown={onImportMarkdown}
           onDeleteDocument={onDeleteDocument}
           onDeleteFolder={onDeleteFolder}
           onRenameFolder={onRenameFolder}
