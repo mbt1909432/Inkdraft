@@ -255,7 +255,7 @@ function DocumentItem({
         'group flex items-center gap-2 px-2 py-2 rounded-md text-sm cursor-pointer hover:bg-accent transition-colors',
         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
         isActive && !selectionMode && 'bg-accent font-medium',
-        isSelected && selectionMode && 'bg-primary/20 ring-2 ring-primary font-medium'
+        isSelected && selectionMode && 'bg-blue-100 dark:bg-blue-900/50 ring-2 ring-blue-500 font-medium text-blue-900 dark:text-blue-100'
       )}
       onClick={handleClick}
       onKeyDown={(e) => !isRenaming && e.key === 'Enter' && handleClick()}
@@ -273,7 +273,7 @@ function DocumentItem({
 
       <FileText className={cn(
         "h-4 w-4 flex-shrink-0",
-        isSelected && selectionMode ? "text-primary" : "text-muted-foreground"
+        isSelected && selectionMode ? "text-blue-600 dark:text-blue-300" : "text-muted-foreground"
       )} />
 
       <div className="flex-1 min-w-0">
