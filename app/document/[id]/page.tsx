@@ -235,6 +235,14 @@ export default function DocumentPage() {
       // Match ``` followed by optional whitespace and newline (no language)
       content = content.replace(/^```\s*$/gm, '```text');
 
+      // Escape curly braces in code blocks for MDX compatibility
+      // MDX interprets { } as JSX expressions
+      content = content.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        // Escape curly braces within code blocks
+        const escapedCode = code.replace(/\{/g, '\\{').replace(/\}/g, '\\}');
+        return '```' + (lang || 'text') + '\n' + escapedCode + '```';
+      });
+
       // Extract title from filename (remove extension)
       const title = file.name.replace(/\.(md|markdown)$/i, '');
 
