@@ -200,8 +200,7 @@ export function MDXEditorCore({
       codeBlockPlugin({ defaultCodeBlockLanguage: 'markdown' }),
       codeMirrorPlugin({
         codeBlockLanguages: {
-          text: 'Plain Text',
-          plaintext: 'Plain Text',
+          markdown: 'Markdown / Plain Text',
           js: 'JavaScript',
           ts: 'TypeScript',
           tsx: 'TypeScript (React)',
@@ -212,7 +211,6 @@ export function MDXEditorCore({
           python: 'Python',
           bash: 'Bash',
           shell: 'Shell',
-          markdown: 'Markdown',
           sql: 'SQL',
           yaml: 'YAML',
           xml: 'XML',
