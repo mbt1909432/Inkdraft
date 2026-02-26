@@ -105,10 +105,10 @@ export function DocumentList({
 
   return (
     <div className="space-y-1">
-      {/* Batch action toolbar */}
+      {/* Batch action toolbar - shown when in selection mode */}
       {selectionMode && (
-        <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/50 rounded-md text-sm">
-          <span className="text-muted-foreground">
+        <div className="flex items-center gap-2 px-2 py-2 bg-blue-50 dark:bg-blue-950 rounded-md text-sm sticky top-0 z-10">
+          <span className="text-blue-700 dark:text-blue-300 font-medium">
             {t('documentList.selected')} {selectedIds.size}
           </span>
           <Button
@@ -132,7 +132,7 @@ export function DocumentList({
             <Button
               variant="destructive"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-7 px-3 text-xs"
               onClick={handleBatchDelete}
             >
               <Trash2 className="h-3 w-3 mr-1" />
@@ -150,12 +150,12 @@ export function DocumentList({
         </div>
       )}
 
-      {/* Enter selection mode button */}
+      {/* Enter selection mode button - shown when NOT in selection mode */}
       {!selectionMode && sortedDocuments.length > 1 && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="w-full h-7 text-xs text-muted-foreground"
+          className="w-full h-8 text-xs"
           onClick={() => setSelectionMode(true)}
         >
           {t('documentList.selectMode')}
