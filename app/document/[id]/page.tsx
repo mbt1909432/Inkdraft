@@ -234,28 +234,8 @@ export default function DocumentPage() {
       // Normalize line endings to \n
       content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-      // Fix code blocks without language identifier
+      // Fix code blocks without language identifier - add 'text' as default
       content = content.replace(/^```\s*$/gm, '```text');
-
-      // Process all code blocks to make them MDX-compatible
-      content = content.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-        let processedCode = code;
-
-        // Escape curly braces (JSX expressions in MDX)
-        processedCode = processedCode.replace(/\{/g, '\\{').replace(/\}/g, '\\}');
-
-        // Replace box-drawing characters with ASCII equivalents (MDXEditor has issues with these)
-        const boxCharMap: Record<string, string> = {
-          '┌': '+', '┐': '+', '└': '+', '┘': '+',
-          '├': '+', '┤': '+', '┬': '+', '┴': '+', '┼': '+',
-          '─': '-', '│': '|', '▼': 'v', '▲': '^',
-        };
-        for (const [box, ascii] of Object.entries(boxCharMap)) {
-          processedCode = processedCode.split(box).join(ascii);
-        }
-
-        return '```' + (lang || 'text') + '\n' + processedCode + '```';
-      });
 
       // Extract title from filename (remove extension)
       const title = file.name.replace(/\.(md|markdown)$/i, '');
