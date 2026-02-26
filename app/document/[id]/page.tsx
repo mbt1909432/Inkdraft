@@ -242,9 +242,9 @@ export default function DocumentPage() {
         // Check if this is a code block delimiter
         if (line.match(/^```\s*$/)) {
           if (!inCodeBlock) {
-            // Opening delimiter without language - add 'text'
+            // Opening delimiter without language - add 'markdown' (CodeMirror supports it)
             inCodeBlock = true;
-            return '```text';
+            return '```markdown';
           } else {
             // Closing delimiter - keep as is
             inCodeBlock = false;

@@ -197,7 +197,7 @@ export function MDXEditorCore({
         },
       }),
       tablePlugin(),
-      codeBlockPlugin({ defaultCodeBlockLanguage: 'text' }),
+      codeBlockPlugin({ defaultCodeBlockLanguage: 'markdown' }),
       codeMirrorPlugin({
         codeBlockLanguages: {
           text: 'Plain Text',
