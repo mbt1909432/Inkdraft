@@ -127,16 +127,30 @@ export default function EditorPage() {
     try {
       let content = await file.text();
 
+      // Normalize line endings to \n
+      content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
       // Fix code blocks without language identifier
-      // Match ``` followed by optional whitespace and newline (no language)
       content = content.replace(/^```\s*$/gm, '```text');
 
-      // Escape curly braces in code blocks for MDX compatibility
-      // MDX interprets { } as JSX expressions
+      // Process all code blocks to make them MDX-compatible
       content = content.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-        // Escape curly braces within code blocks
-        const escapedCode = code.replace(/\{/g, '\\{').replace(/\}/g, '\\}');
-        return '```' + (lang || 'text') + '\n' + escapedCode + '```';
+        let processedCode = code;
+
+        // Escape curly braces (JSX expressions in MDX)
+        processedCode = processedCode.replace(/\{/g, '\\{').replace(/\}/g, '\\}');
+
+        // Replace box-drawing characters with ASCII equivalents (MDXEditor has issues with these)
+        const boxCharMap: Record<string, string> = {
+          '┌': '+', '┐': '+', '└': '+', '┘': '+',
+          '├': '+', '┤': '+', '┬': '+', '┴': '+', '┼': '+',
+          '─': '-', '│': '|', '▼': 'v', '▲': '^',
+        };
+        for (const [box, ascii] of Object.entries(boxCharMap)) {
+          processedCode = processedCode.split(box).join(ascii);
+        }
+
+        return '```' + (lang || 'text') + '\n' + processedCode + '```';
       });
 
       // Extract title from filename (remove extension)
