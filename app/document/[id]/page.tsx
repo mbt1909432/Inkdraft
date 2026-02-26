@@ -301,6 +301,35 @@ export default function DocumentPage() {
     }
   };
 
+  const handleBatchDelete = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${ids.length} document(s)?`)) return;
+
+    const toastId = toast.loading(`Deleting ${ids.length} document(s)...`);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const id of ids) {
+      try {
+        await removeDocument(id);
+        successCount++;
+        // If current document is deleted, redirect
+        if (currentDocument?.id === id) {
+          router.push('/documents');
+        }
+      } catch (error) {
+        console.error('Error deleting document:', id, error);
+        failCount++;
+      }
+    }
+
+    if (failCount === 0) {
+      toast.success(`${successCount} document(s) deleted`, { id: toastId });
+    } else {
+      toast.error(`Deleted ${successCount}, failed ${failCount}`, { id: toastId });
+    }
+  };
+
   const handleDeleteFolder = async (id: string) => {
     if (confirm('Are you sure you want to delete this folder?')) {
       try {
@@ -382,6 +411,7 @@ export default function DocumentPage() {
           onCreateFolder={handleCreateFolder}
           onImportMarkdown={handleImportMarkdown}
           onDeleteDocument={handleDeleteDocument}
+          onBatchDelete={handleBatchDelete}
           onDeleteFolder={handleDeleteFolder}
           onRenameFolder={handleRenameFolder}
           onRenameDocument={handleRenameDocument}
@@ -401,6 +431,7 @@ export default function DocumentPage() {
               onCreateFolder={handleCreateFolder}
               onImportMarkdown={handleImportMarkdown}
               onDeleteDocument={handleDeleteDocument}
+              onBatchDelete={handleBatchDelete}
               onDeleteFolder={handleDeleteFolder}
               onRenameFolder={handleRenameFolder}
               onRenameDocument={handleRenameDocument}

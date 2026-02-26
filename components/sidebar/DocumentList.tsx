@@ -5,13 +5,14 @@ import { useTranslations } from '@/contexts/LocaleContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FileText, MoreHorizontal, Pin, PinOff, Trash2, Edit2 } from 'lucide-react';
+import { FileText, MoreHorizontal, Pin, PinOff, Trash2, Edit2, X } from 'lucide-react';
 import type { Document } from '@/lib/types';
 
 // UUID validation regex
@@ -28,6 +29,7 @@ interface DocumentListProps {
   onDeleteDocument?: (id: string) => Promise<void>;
   onTogglePin?: (id: string) => Promise<void>;
   onRenameDocument?: (id: string, title: string) => Promise<void>;
+  onBatchDelete?: (ids: string[]) => Promise<void>;
 }
 
 export function DocumentList({
@@ -37,8 +39,12 @@ export function DocumentList({
   onDeleteDocument,
   onTogglePin,
   onRenameDocument,
+  onBatchDelete,
 }: DocumentListProps) {
   const t = useTranslations();
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   // Filter out documents with invalid IDs (e.g., placeholders like %%drp:id:xxx%%)
   const validDocuments = useMemo(
     () => documents.filter((doc) => isValidDocumentId(doc.id)),
@@ -57,6 +63,38 @@ export function DocumentList({
     [validDocuments]
   );
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(sortedDocuments.map((d) => d.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleBatchDelete = async () => {
+    if (onBatchDelete && selectedIds.size > 0) {
+      await onBatchDelete(Array.from(selectedIds));
+      exitSelectionMode();
+    }
+  };
+
   if (sortedDocuments.length === 0) {
     return (
       <div className="text-sm text-muted-foreground text-center py-4">
@@ -66,28 +104,94 @@ export function DocumentList({
   }
 
   return (
-    <ul className="space-y-0.5">
-      {sortedDocuments.map((doc) => (
-        <li key={doc.id}>
-          <DocumentItem
-            document={doc}
-            isActive={doc.id === currentDocumentId}
-            onSelect={() => onSelectDocument?.(doc.id)}
-            onDelete={() => onDeleteDocument?.(doc.id)}
-            onTogglePin={() => onTogglePin?.(doc.id)}
-            onRename={onRenameDocument ? (title) => onRenameDocument(doc.id, title) : undefined}
-          />
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-1">
+      {/* Batch action toolbar */}
+      {selectionMode && (
+        <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/50 rounded-md text-sm">
+          <span className="text-muted-foreground">
+            {t('documentList.selected')} {selectedIds.size}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={selectAll}
+          >
+            {t('documentList.selectAll')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={clearSelection}
+          >
+            {t('documentList.deselectAll')}
+          </Button>
+          <div className="flex-1" />
+          {selectedIds.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={handleBatchDelete}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              {t('documentList.delete')} ({selectedIds.size})
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={exitSelectionMode}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Enter selection mode button */}
+      {!selectionMode && sortedDocuments.length > 1 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full h-7 text-xs text-muted-foreground"
+          onClick={() => setSelectionMode(true)}
+        >
+          {t('documentList.selectMode')}
+        </Button>
+      )}
+
+      {/* Document list */}
+      <ul className="space-y-0.5">
+        {sortedDocuments.map((doc) => (
+          <li key={doc.id}>
+            <DocumentItem
+              document={doc}
+              isActive={doc.id === currentDocumentId}
+              isSelected={selectedIds.has(doc.id)}
+              selectionMode={selectionMode}
+              onSelect={() => onSelectDocument?.(doc.id)}
+              onDelete={() => onDeleteDocument?.(doc.id)}
+              onToggleSelect={() => toggleSelect(doc.id)}
+              onTogglePin={() => onTogglePin?.(doc.id)}
+              onRename={onRenameDocument ? (title) => onRenameDocument(doc.id, title) : undefined}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 interface DocumentItemProps {
   document: Document;
   isActive: boolean;
+  isSelected: boolean;
+  selectionMode: boolean;
   onSelect: () => void;
   onDelete: () => void;
+  onToggleSelect: () => void;
   onTogglePin: () => void;
   onRename?: (title: string) => Promise<void>;
 }
@@ -95,8 +199,11 @@ interface DocumentItemProps {
 function DocumentItem({
   document,
   isActive,
+  isSelected,
+  selectionMode,
   onSelect,
   onDelete,
+  onToggleSelect,
   onTogglePin,
   onRename,
 }: DocumentItemProps) {
@@ -132,6 +239,14 @@ function DocumentItem({
     setIsRenaming(false);
   };
 
+  const handleClick = () => {
+    if (selectionMode) {
+      onToggleSelect();
+    } else if (!isRenaming) {
+      onSelect();
+    }
+  };
+
   return (
     <div
       role="button"
@@ -139,15 +254,23 @@ function DocumentItem({
       className={cn(
         'group flex items-center gap-2 px-2 py-2 rounded-md text-sm cursor-pointer hover:bg-accent transition-colors',
         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
-        isActive && 'bg-accent font-medium'
+        isActive && !selectionMode && 'bg-accent font-medium',
+        isSelected && selectionMode && 'bg-primary/10 ring-1 ring-primary'
       )}
-      onClick={isRenaming ? undefined : () => {
-        console.log('[DocumentList] onClick triggered');
-        onSelect();
-      }}
-      onKeyDown={(e) => !isRenaming && e.key === 'Enter' && onSelect()}
-      aria-current={isActive ? 'page' : undefined}
+      onClick={handleClick}
+      onKeyDown={(e) => !isRenaming && e.key === 'Enter' && handleClick()}
+      aria-current={isActive && !selectionMode ? 'page' : undefined}
     >
+      {/* Checkbox in selection mode */}
+      {selectionMode && (
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={onToggleSelect}
+          onClick={(e) => e.stopPropagation()}
+          className="flex-shrink-0"
+        />
+      )}
+
       <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
 
       <div className="flex-1 min-w-0">
@@ -183,7 +306,8 @@ function DocumentItem({
         )}
       </div>
 
-      {!isRenaming && (
+      {/* Only show dropdown in non-selection mode */}
+      {!isRenaming && !selectionMode && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -220,7 +344,6 @@ function DocumentItem({
               className="text-destructive"
               onClick={(e) => {
                 e.stopPropagation();
-                console.log('[DocumentList] Delete clicked for document:', document.id);
                 onDelete();
               }}
             >

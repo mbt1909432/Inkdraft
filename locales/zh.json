@@ -79,6 +79,7 @@
     "saveDocument": "保存文档",
     "download": "下载",
     "downloadDocument": "下载文档",
+    "markdownFile": "Markdown 文件 (.md)",
     "wordDoc": "Word 文档 (.docx)",
     "pdfDoc": "PDF 文档 (.pdf)",
     "exportWordFailed": "导出 Word 失败",
@@ -122,7 +123,11 @@
     "delete": "删除",
     "today": "今天",
     "yesterday": "昨天",
-    "daysAgo": "天前"
+    "daysAgo": "天前",
+    "selectMode": "选择模式",
+    "selected": "已选择",
+    "selectAll": "全选",
+    "deselectAll": "取消全选"
   },
   "saveToast": {
     "saving": "正在保存…",

@@ -40,6 +40,7 @@ interface SidebarProps {
   onCreateFolder?: (parentId?: string | null) => Promise<void>;
   onImportMarkdown?: (folderId?: string | null) => void;
   onDeleteDocument?: (id: string) => Promise<void>;
+  onBatchDelete?: (ids: string[]) => Promise<void>;
   onDeleteFolder?: (id: string) => Promise<void>;
   onRenameFolder?: (id: string, name: string) => Promise<void>;
   onRenameDocument?: (id: string, title: string) => Promise<void>;
@@ -51,6 +52,7 @@ export function Sidebar({
   onCreateFolder,
   onImportMarkdown,
   onDeleteDocument,
+  onBatchDelete,
   onDeleteFolder,
   onRenameFolder,
   onRenameDocument,
@@ -254,6 +256,7 @@ export function Sidebar({
                 onSelectDocument={onSelectDocument}
                 onDeleteDocument={onDeleteDocument}
                 onRenameDocument={onRenameDocument}
+                onBatchDelete={onBatchDelete}
               />
             ))}
           </div>
@@ -266,6 +269,7 @@ export function Sidebar({
               onSelectDocument={onSelectDocument}
               onDeleteDocument={onDeleteDocument}
               onRenameDocument={onRenameDocument}
+              onBatchDelete={onBatchDelete}
             />
           </div>
         </nav>
@@ -286,6 +290,7 @@ interface FolderItemProps {
   onSelectDocument?: (id: string) => void;
   onDeleteDocument?: (id: string) => Promise<void>;
   onRenameDocument?: (id: string, title: string) => Promise<void>;
+  onBatchDelete?: (ids: string[]) => Promise<void>;
 }
 
 function FolderItem({
@@ -300,6 +305,7 @@ function FolderItem({
   onSelectDocument,
   onDeleteDocument,
   onRenameDocument,
+  onBatchDelete,
 }: FolderItemProps) {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
@@ -393,6 +399,7 @@ function FolderItem({
               onSelectDocument={onSelectDocument}
               onDeleteDocument={onDeleteDocument}
               onRenameDocument={onRenameDocument}
+              onBatchDelete={onBatchDelete}
             />
           ))}
           <DocumentList
@@ -401,6 +408,7 @@ function FolderItem({
             onSelectDocument={onSelectDocument}
             onDeleteDocument={onDeleteDocument}
             onRenameDocument={onRenameDocument}
+            onBatchDelete={onBatchDelete}
           />
         </div>
       ) : null}

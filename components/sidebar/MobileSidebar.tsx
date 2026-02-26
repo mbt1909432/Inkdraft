@@ -13,6 +13,7 @@ interface MobileSidebarProps {
   onCreateFolder?: (parentId?: string | null) => Promise<void>;
   onImportMarkdown?: (folderId?: string | null) => void;
   onDeleteDocument?: (id: string) => Promise<void>;
+  onBatchDelete?: (ids: string[]) => Promise<void>;
   onDeleteFolder?: (id: string) => Promise<void>;
   onRenameFolder?: (id: string, name: string) => Promise<void>;
   onRenameDocument?: (id: string, title: string) => Promise<void>;
@@ -24,6 +25,7 @@ export function MobileSidebar({
   onCreateFolder,
   onImportMarkdown,
   onDeleteDocument,
+  onBatchDelete,
   onDeleteFolder,
   onRenameFolder,
   onRenameDocument,
@@ -54,6 +56,7 @@ export function MobileSidebar({
           onCreateFolder={onCreateFolder}
           onImportMarkdown={onImportMarkdown}
           onDeleteDocument={onDeleteDocument}
+          onBatchDelete={onBatchDelete}
           onDeleteFolder={onDeleteFolder}
           onRenameFolder={onRenameFolder}
           onRenameDocument={onRenameDocument}

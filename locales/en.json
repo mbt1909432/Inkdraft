@@ -79,6 +79,7 @@
     "saveDocument": "Save document",
     "download": "Download",
     "downloadDocument": "Download document",
+    "markdownFile": "Markdown (.md)",
     "wordDoc": "Word (.docx)",
     "pdfDoc": "PDF (.pdf)",
     "exportWordFailed": "Export to Word failed",
@@ -122,7 +123,11 @@
     "delete": "Delete",
     "today": "Today",
     "yesterday": "Yesterday",
-    "daysAgo": "days ago"
+    "daysAgo": "days ago",
+    "selectMode": "Select mode",
+    "selected": "Selected",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all"
   },
   "saveToast": {
     "saving": "Saving…",

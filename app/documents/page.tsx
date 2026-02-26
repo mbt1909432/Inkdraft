@@ -203,6 +203,31 @@ export default function EditorPage() {
     }
   };
 
+  const handleBatchDelete = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    if (!confirm(`确定要删除 ${ids.length} 个文档吗？`)) return;
+
+    const toastId = toast.loading(`正在删除 ${ids.length} 个文档...`);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const id of ids) {
+      try {
+        await removeDocument(id);
+        successCount++;
+      } catch (error) {
+        console.error('Error deleting document:', id, error);
+        failCount++;
+      }
+    }
+
+    if (failCount === 0) {
+      toast.success(`已删除 ${successCount} 个文档`, { id: toastId });
+    } else {
+      toast.error(`成功 ${successCount} 个，失败 ${failCount} 个`, { id: toastId });
+    }
+  };
+
   const handleDeleteFolder = async (id: string) => {
     if (confirm('确定要删除这个文件夹吗？')) {
       const toastId = toast.loading('删除中...');
@@ -288,6 +313,7 @@ export default function EditorPage() {
           onCreateFolder={handleCreateFolder}
           onImportMarkdown={handleImportMarkdown}
           onDeleteDocument={handleDeleteDocument}
+          onBatchDelete={handleBatchDelete}
           onDeleteFolder={handleDeleteFolder}
           onRenameFolder={handleRenameFolder}
           onRenameDocument={handleRenameDocument}

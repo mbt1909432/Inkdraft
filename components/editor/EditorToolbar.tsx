@@ -24,6 +24,7 @@ import {
   Download,
   FileText,
   FileType,
+  FileCode,
   MessageSquare,
   FolderOpen,
 } from 'lucide-react';
@@ -40,6 +41,20 @@ import { downloadAsWord } from '@/lib/export/markdown-to-docx';
 import { downloadAsPdf } from '@/lib/export/markdown-to-pdf';
 import { toast } from 'sonner';
 import { DiskFileBrowser } from '@/components/disk/DiskFileBrowser';
+
+// Download markdown as .md file
+function downloadAsMarkdown(content: string, title: string) {
+  const filename = `${title.replace(/[/\\?%*:|"<>]/g, '_')}.md`;
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 interface EditorToolbarProps {
   onSave?: () => Promise<void>;
@@ -275,7 +290,7 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
           <span className="ml-1 hidden sm:inline">{t('editor.save')}</span>
         </Button>
 
-        {/* Download: Word / PDF */}
+        {/* Download: Markdown / Word / PDF */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" aria-label={t('editor.downloadDocument')}>
@@ -284,6 +299,16 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                if (currentDocument) {
+                  downloadAsMarkdown(currentDocument.content ?? '', currentDocument.title);
+                }
+              }}
+            >
+              <FileCode className="h-4 w-4" />
+              {t('editor.markdownFile')}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 if (currentDocument) {
