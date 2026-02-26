@@ -80,6 +80,23 @@ function transformDiskUrlsToProxy(markdown: string, documentId: string): string 
 }
 
 /**
+ * Normalize code block language identifiers
+ * Convert unsupported languages to supported equivalents
+ */
+function normalizeCodeBlockLanguages(markdown: string): string {
+  return markdown.replace(/```(\w+)\n/g, (match, lang) => {
+    // Map unsupported languages to supported equivalents
+    const languageMap: Record<string, string> = {
+      'text': 'markdown',
+      'plaintext': 'markdown',
+      'textfile': 'markdown',
+    };
+    const normalizedLang = languageMap[lang.toLowerCase()] || lang;
+    return '```' + normalizedLang + '\n';
+  });
+}
+
+/**
  * Transform proxy URLs back to disk:: URLs for storage
  */
 function transformProxyUrlsToDisk(markdown: string, documentId: string): string {
@@ -108,9 +125,11 @@ export function MDXEditorCore({
   const containerRef = useRef<HTMLDivElement>(null);
   const isProcessingPaste = useRef(false);
 
-  // Transform content for rendering (disk:: -> proxy URLs)
+  // Transform content for rendering (disk:: -> proxy URLs, normalize languages)
   const renderedContent = useMemo(() => {
-    return transformDiskUrlsToProxy(content, documentId);
+    let transformed = transformDiskUrlsToProxy(content, documentId);
+    transformed = normalizeCodeBlockLanguages(transformed);
+    return transformed;
   }, [content, documentId]);
 
   // Handle content changes - transform proxy URLs back to disk::
@@ -200,7 +219,9 @@ export function MDXEditorCore({
       codeBlockPlugin({ defaultCodeBlockLanguage: 'markdown' }),
       codeMirrorPlugin({
         codeBlockLanguages: {
-          markdown: 'Markdown / Plain Text',
+          text: 'Plain Text',
+          plaintext: 'Plain Text',
+          markdown: 'Markdown',
           js: 'JavaScript',
           javascript: 'JavaScript',
           ts: 'TypeScript',
