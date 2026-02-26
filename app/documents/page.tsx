@@ -13,7 +13,7 @@ import { OutlineView } from '@/components/sidebar/OutlineView';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { Button } from '@/components/ui/button';
-import { LogOut, FileText, Plus, FileStack, Loader2 } from 'lucide-react';
+import { LogOut, FileText, Plus, FileStack, Loader2, Upload } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useDocumentStore } from '@/lib/store/document-store';
 import { ResizeHandle } from '@/components/ui/resize-handle';
@@ -32,7 +32,9 @@ export default function EditorPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentDocument, loadDocuments, loadDocument, createNewDocument, saveDocument, removeDocument, pinDocument, renameDocument } = useDocument();
   const { loadFolders, createNewFolder, renameFolder, removeFolder } = useFolder();
   const { sidebarOpen, outlineOpen, sidebarWidth, resizeSidebarBy } =
@@ -100,6 +102,45 @@ export default function EditorPage() {
 
   const handleBlankDocument = async () => {
     await handleCreateDocument();
+  };
+
+  const handleImportMarkdown = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset file input so the same file can be selected again
+    e.target.value = '';
+
+    // Check file extension
+    if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
+      toast.error(t('documents.importFailed') + ': ' + (file.name.endsWith('.txt') ? '请使用 .md 或 .markdown 文件' : 'Invalid file type'));
+      return;
+    }
+
+    setIsImporting(true);
+    const toastId = toast.loading(t('documents.importing'));
+
+    try {
+      const content = await file.text();
+
+      // Extract title from filename (remove extension)
+      const title = file.name.replace(/\.(md|markdown)$/i, '');
+
+      const doc = await createNewDocument(null, { title, content });
+      toast.success(t('documents.importSuccess'), { id: toastId });
+
+      // Navigate to the new document
+      window.location.href = `/document/${doc.id}`;
+    } catch (error) {
+      console.error('Error importing markdown:', error);
+      toast.error(t('documents.importFailed') + ': ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleCreateFolder = async (parentId?: string | null) => {
@@ -257,8 +298,8 @@ export default function EditorPage() {
             <div className="flex gap-2 justify-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="lg" disabled={isCreating}>
-                    {isCreating ? (
+                  <Button size="lg" disabled={isCreating || isImporting}>
+                    {isCreating || isImporting ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <Plus className="h-4 w-4 mr-2" />
@@ -269,11 +310,15 @@ export default function EditorPage() {
                 <DropdownMenuContent align="center" className="w-48">
                   <DropdownMenuItem onClick={handleBlankDocument}>
                     <FileText className="h-4 w-4 mr-2" />
-                    空白文档
+                    {t('documents.blankDocument')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setTemplatePickerOpen(true)}>
                     <FileStack className="h-4 w-4 mr-2" />
-                    从模板创建
+                    {t('documents.fromTemplate')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleImportMarkdown} disabled={isImporting}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    {t('documents.importMarkdown')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -288,6 +333,15 @@ export default function EditorPage() {
           onSelect={handleSelectTemplate}
         />
       </main>
+
+      {/* Hidden file input for markdown import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".md,.markdown"
+        onChange={handleFileChange}
+        className="hidden"
+      />
 
       {/* Outline view (hidden when no document) */}
       {outlineOpen && <OutlineView className="hidden" />}

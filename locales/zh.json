@@ -49,7 +49,13 @@
   "documents": {
     "welcome": "欢迎使用墨稿",
     "welcomeDesc": "用 AI 写好每一稿。所见即所得编辑，云端同步与 AI 编辑助手",
-    "createDocument": "创建新文档"
+    "createDocument": "创建新文档",
+    "blankDocument": "空白文档",
+    "fromTemplate": "从模板创建",
+    "importMarkdown": "导入 Markdown",
+    "importing": "导入中...",
+    "importSuccess": "文档导入成功",
+    "importFailed": "导入失败"
   },
   "editor": {
     "docList": "文档",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   MDXEditor,
   headingsPlugin,
@@ -38,6 +38,31 @@ interface MDXEditorCoreProps {
   onChange: (markdown: string) => void;
   readOnly?: boolean;
   documentId: string;
+}
+
+/**
+ * Check if text contains markdown syntax patterns
+ */
+function containsMarkdownSyntax(text: string): boolean {
+  // Check for common markdown patterns
+  const markdownPatterns = [
+    /^#{1,6}\s+.+$/m,           // Headings: # ## ### etc.
+    /^\s*[-*+]\s+.+$/m,         // Unordered lists
+    /^\s*\d+\.\s+.+$/m,         // Ordered lists
+    /\*\*.+?\*\*/,              // Bold
+    /\*.+?\*/,                  // Italic (single asterisk)
+    /__.+?__/,                  // Bold (underscore)
+    /_.+?_/,                    // Italic (underscore)
+    /`[^`]+`/,                  // Inline code
+    /^```/m,                    // Code block
+    /\[.+?\]\(.+?\)/,           // Links
+    /!\[.*?\]\(.+?\)/,          // Images
+    /^>\s+.+$/m,                // Blockquotes
+    /^---+$/m,                  // Horizontal rules
+    /^\|.+\|$/m,                // Tables
+  ];
+
+  return markdownPatterns.some(pattern => pattern.test(text));
 }
 
 /**
@@ -80,6 +105,8 @@ export function MDXEditorCore({
   documentId,
 }: MDXEditorCoreProps) {
   const editorRef = useRef<MDXEditorMethods>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isProcessingPaste = useRef(false);
 
   // Transform content for rendering (disk:: -> proxy URLs)
   const renderedContent = useMemo(() => {
@@ -88,9 +115,46 @@ export function MDXEditorCore({
 
   // Handle content changes - transform proxy URLs back to disk::
   const handleChange = (markdown: string) => {
+    // Skip if we're processing a paste to avoid double conversion
+    if (isProcessingPaste.current) return;
     const originalMarkdown = transformProxyUrlsToDisk(markdown, documentId);
     onChange(originalMarkdown);
   };
+
+  // Handle paste event to convert markdown syntax
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || readOnly) return;
+
+    const handlePaste = async (e: Event) => {
+      const clipboardEvent = e as ClipboardEvent;
+      const pastedText = clipboardEvent.clipboardData?.getData('text/plain');
+      if (!pastedText || !containsMarkdownSyntax(pastedText)) return;
+
+      // Let the paste happen normally first, then re-parse
+      // Wait for the paste to complete
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Get the current markdown (which now includes pasted text as raw text)
+      const currentMarkdown = editorRef.current?.getMarkdown() || '';
+
+      // Re-set to trigger markdown parsing
+      isProcessingPaste.current = true;
+      editorRef.current?.setMarkdown(currentMarkdown);
+
+      // Reset flag after a short delay
+      setTimeout(() => {
+        isProcessingPaste.current = false;
+      }, 100);
+    };
+
+    // Find the content editable element
+    const contentEditable = container.querySelector('[contenteditable="true"]');
+    if (contentEditable) {
+      contentEditable.addEventListener('paste', handlePaste);
+      return () => contentEditable.removeEventListener('paste', handlePaste);
+    }
+  }, [readOnly]);
 
   // Sync store content into editor when document switches or content is set externally (e.g. draft)
   useEffect(() => {
@@ -174,7 +238,7 @@ export function MDXEditorCore({
   );
 
   return (
-    <div className={`markdown-editor-wrapper ${className}`}>
+    <div ref={containerRef} className={`markdown-editor-wrapper ${className}`}>
       <MDXEditor
         ref={editorRef}
         markdown={renderedContent}
