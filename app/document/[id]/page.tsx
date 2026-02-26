@@ -234,8 +234,30 @@ export default function DocumentPage() {
       // Normalize line endings to \n
       content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-      // Fix code blocks without language identifier - add 'text' as default
-      content = content.replace(/^```\s*$/gm, '```text');
+      // Fix code blocks without language identifier
+      // Process line by line to distinguish opening from closing delimiters
+      const lines = content.split('\n');
+      let inCodeBlock = false;
+      const processedLines = lines.map(line => {
+        // Check if this is a code block delimiter
+        if (line.match(/^```\s*$/)) {
+          if (!inCodeBlock) {
+            // Opening delimiter without language - add 'text'
+            inCodeBlock = true;
+            return '```text';
+          } else {
+            // Closing delimiter - keep as is
+            inCodeBlock = false;
+            return line;
+          }
+        }
+        // Check if this is an opening delimiter WITH a language
+        if (line.match(/^```\w+/)) {
+          inCodeBlock = true;
+        }
+        return line;
+      });
+      content = processedLines.join('\n');
 
       // Extract title from filename (remove extension)
       const title = file.name.replace(/\.(md|markdown)$/i, '');
