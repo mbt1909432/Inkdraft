@@ -214,8 +214,9 @@ function DocumentItem({
     setNewTitle(document.title);
   }, [document.title]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  // Memoize formatted date to avoid recalculation on every render
+  const formattedDate = useMemo(() => {
+    const date = new Date(document.last_edited_at);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -229,7 +230,7 @@ function DocumentItem({
     } else {
       return date.toLocaleDateString();
     }
-  };
+  }, [document.last_edited_at, t]);
 
   const handleRename = async () => {
     if (onRename && newTitle.trim() && newTitle !== document.title) {
@@ -303,7 +304,7 @@ function DocumentItem({
               )}
             </div>
             <span className="text-xs text-muted-foreground">
-              {formatDate(document.last_edited_at)}
+              {formattedDate}
             </span>
           </>
         )}
