@@ -106,7 +106,7 @@ function buildSystemContent(documentMarkdown: string, selectionMarkdown?: string
   return CHAT_EDIT_SYSTEM_PROMPT + documentBlock + selectionBlock;
 }
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -120,10 +120,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Acontext not configured' }, { status: 500 });
     }
 
-    const url = new URL(request.url);
-    const documentId = url.searchParams.get('documentId');
-    const documentMarkdown = url.searchParams.get('documentMarkdown') || '';
-    const selectionMarkdown = url.searchParams.get('selectionMarkdown') || null;
+    const body = await request.json();
+    const documentId = body.documentId;
+    const documentMarkdown = body.documentMarkdown || '';
+    const selectionMarkdown = body.selectionMarkdown || null;
 
     if (!documentId) {
       return NextResponse.json({ error: 'documentId is required' }, { status: 400 });

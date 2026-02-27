@@ -138,15 +138,15 @@ export function SessionMemoryPanel({
     setError(null);
 
     try {
-      const params = new URLSearchParams({
-        documentId,
-        documentMarkdown,
+      const res = await fetch('/api/ai/session-debug', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentId,
+          documentMarkdown,
+          selectionMarkdown,
+        }),
       });
-      if (selectionMarkdown) {
-        params.set('selectionMarkdown', selectionMarkdown);
-      }
-
-      const res = await fetch(`/api/ai/session-debug?${params}`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
