@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 import { selectionToolbarPlugin } from './selectionToolbarPlugin';
 import '@mdxeditor/editor/style.css';
 import { uploadImage, diskUrlToProxyUrl, isDiskUrl } from '@/lib/upload-image';
+import { unescapeMarkdown } from '@/lib/unescape-markdown';
 
 interface MDXEditorCoreProps {
   className?: string;
@@ -132,11 +133,13 @@ export function MDXEditorCore({
     return transformed;
   }, [content, documentId]);
 
-  // Handle content changes - transform proxy URLs back to disk::
+  // Handle content changes - transform proxy URLs back to disk:: and unescape HTML entities
   const handleChange = (markdown: string) => {
     // Skip if we're processing a paste to avoid double conversion
     if (isProcessingPaste.current) return;
-    const originalMarkdown = transformProxyUrlsToDisk(markdown, documentId);
+    // MDXEditor may produce HTML entities like &#x20; for spaces in tables/code blocks
+    const unescapedMarkdown = unescapeMarkdown(markdown);
+    const originalMarkdown = transformProxyUrlsToDisk(unescapedMarkdown, documentId);
     onChange(originalMarkdown);
   };
 
