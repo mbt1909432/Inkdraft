@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { applyEditTool } from '@/lib/editor/apply-edit-tools';
 import { sanitizeHtml } from '@/lib/chat/sanitize-html';
 import { useTranslations } from '@/contexts/LocaleContext';
+import { SessionMemoryPanel } from './SessionMemoryPanel';
 
 /** Transform disk:: URLs to proxy URLs for rendering in chat */
 function transformDiskUrlsInContent(content: string, documentId: string): string {
@@ -961,6 +962,13 @@ export function ChatPanel({
               <History className="h-3 w-3" />
               {messages.length} {t('chat.messageCount')}
             </span>
+          )}
+          {useAcontext && documentId && (
+            <SessionMemoryPanel
+              documentId={documentId}
+              documentMarkdown={getMarkdown()}
+              selectionMarkdown={getSelectionMarkdown?.()}
+            />
           )}
           {onClose && (
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
