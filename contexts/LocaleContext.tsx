@@ -45,7 +45,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     (key: string): string => {
       if (!mounted) return key;
       const msg = messagesMap[locale];
-      const value = getByPath(msg, key);
+      const value = getByPath(msg, key, locale);
       return value ?? key;
     },
     [locale, mounted]
