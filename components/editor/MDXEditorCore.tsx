@@ -91,6 +91,7 @@ function normalizeCodeBlockLanguages(markdown: string): string {
       'text': 'markdown',
       'plaintext': 'markdown',
       'textfile': 'markdown',
+      'jsonc': 'json',  // JSON with comments → plain JSON
     };
     const normalizedLang = languageMap[lang.toLowerCase()] || lang;
     return '```' + normalizedLang + '\n';
