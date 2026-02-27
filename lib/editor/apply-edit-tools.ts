@@ -3,8 +3,6 @@
  * Used by ChatPanel when the model returns tool_calls.
  */
 
-import { unescapeMarkdown } from '@/lib/unescape-markdown';
-
 export interface ApplySearchReplaceResult {
   newMarkdown: string;
   applied: boolean;
@@ -19,12 +17,8 @@ export function applySearchReplace(
   if (typeof old_string !== 'string' || typeof new_string !== 'string') {
     return { newMarkdown: markdown, applied: false, error: 'Invalid arguments' };
   }
-  // Unescape HTML entities (e.g. &#x20; -> space) from LLM output
-  // Both old_string and new_string may contain &#x20; from the LLM
-  const unescapedOldString = unescapeMarkdown(old_string);
-  const unescapedNewString = unescapeMarkdown(new_string);
 
-  const index = markdown.indexOf(unescapedOldString);
+  const index = markdown.indexOf(old_string);
   if (index === -1) {
     return {
       newMarkdown: markdown,
@@ -33,7 +27,7 @@ export function applySearchReplace(
     };
   }
   const newMarkdown =
-    markdown.slice(0, index) + unescapedNewString + markdown.slice(index + unescapedOldString.length);
+    markdown.slice(0, index) + new_string + markdown.slice(index + old_string.length);
   return { newMarkdown, applied: true };
 }
 
@@ -51,11 +45,8 @@ export function applyInsertAfter(
   if (typeof after_string !== 'string' || typeof content !== 'string') {
     return { newMarkdown: markdown, applied: false, error: 'Invalid arguments' };
   }
-  // Unescape HTML entities (e.g. &#x20; -> space) from LLM output
-  const unescapedAfterString = unescapeMarkdown(after_string);
-  const unescapedContent = unescapeMarkdown(content);
 
-  const index = markdown.indexOf(unescapedAfterString);
+  const index = markdown.indexOf(after_string);
   if (index === -1) {
     return {
       newMarkdown: markdown,
@@ -63,9 +54,9 @@ export function applyInsertAfter(
       error: 'after_string not found in document',
     };
   }
-  const insertIndex = index + unescapedAfterString.length;
+  const insertIndex = index + after_string.length;
   const newMarkdown =
-    markdown.slice(0, insertIndex) + unescapedContent + markdown.slice(insertIndex);
+    markdown.slice(0, insertIndex) + content + markdown.slice(insertIndex);
   return { newMarkdown, applied: true };
 }
 
