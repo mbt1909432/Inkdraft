@@ -1,17 +1,53 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Book, Key, Upload, List, Code, FileText, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Book, Key, Upload, List, Code, FileText, Edit, Trash2, Copy, Download, Check, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from '@/contexts/LocaleContext';
+import { toast } from 'sonner';
 
 export default function ApiDocsPage() {
   const t = useTranslations();
   const { locale } = useLocale();
+  const [copied, setCopied] = useState(false);
+
+  const copyLlmsTxt = async () => {
+    try {
+      const response = await fetch('/llms.txt');
+      const text = await response.text();
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success(locale === 'zh' ? '已复制到剪贴板' : 'Copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error(locale === 'zh' ? '复制失败' : 'Copy failed');
+    }
+  };
+
+  const downloadLlmsTxt = async () => {
+    try {
+      const response = await fetch('/llms.txt');
+      const text = await response.text();
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'llms.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error(locale === 'zh' ? '下载失败' : 'Download failed');
+    }
+  };
 
   const text = {
     title: locale === 'zh' ? 'API 文档' : 'API Documentation',
     subtitle: locale === 'zh' ? '外部 API 用于编程访问文档' : 'External API for programmatic document access',
+    llmsTxt: locale === 'zh' ? 'LLM 友好格式' : 'LLM Friendly',
+    llmsTxtDesc: locale === 'zh' ? '下载 llms.txt 文件，直接提供给 AI/LLM 使用' : 'Download llms.txt for AI/LLM consumption',
+    copy: locale === 'zh' ? '复制' : 'Copy',
+    download: locale === 'zh' ? '下载' : 'Download',
     auth: locale === 'zh' ? '认证' : 'Authentication',
     authDesc: locale === 'zh'
       ? '所有 API 请求都需要使用 API 密钥进行认证。您可以在 设置 页面创建和管理 API 密钥。'
@@ -63,6 +99,32 @@ export default function ApiDocsPage() {
             <p className="text-muted-foreground">
               {text.subtitle}
             </p>
+          </div>
+        </div>
+
+        {/* LLM.txt Section */}
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <Bot className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+              <div>
+                <h3 className="font-semibold text-lg">{text.llmsTxt}</h3>
+                <p className="text-sm text-muted-foreground">{text.llmsTxtDesc}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={copyLlmsTxt}>
+                {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                {copied ? (locale === 'zh' ? '已复制' : 'Copied') : text.copy}
+              </Button>
+              <Button variant="default" size="sm" onClick={downloadLlmsTxt}>
+                <Download className="h-4 w-4 mr-1" />
+                {text.download}
+              </Button>
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-muted-foreground">
+            <code className="bg-background px-1.5 py-0.5 rounded">GET /llms.txt</code>
           </div>
         </div>
 
