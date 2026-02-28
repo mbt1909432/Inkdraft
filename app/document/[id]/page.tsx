@@ -26,6 +26,7 @@ import { SaveToast, type SaveToastType } from '@/components/SaveToast';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { MobileChat } from '@/components/chat/MobileChat';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { DraftModal } from '@/components/editor/DraftModal';
 import { useTranslations } from '@/contexts/LocaleContext';
 
 /** Supabase document id is UUID; reject placeholders like %%drp:id:xxx%% */
@@ -68,6 +69,7 @@ export default function DocumentPage() {
   const [notFound, setNotFound] = useState(false);
   const [saveToast, setSaveToast] = useState<SaveToastType>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [draftModalOpen, setDraftModalOpen] = useState(false);
   const {
     currentDocument,
     loadDocuments,
@@ -528,7 +530,18 @@ export default function DocumentPage() {
       {/* Mobile Bottom Navigation */}
       {isMobile && (
         <MobileBottomNav
-          onDraft={() => {/* TODO: trigger draft modal */}}
+          onDraft={() => setDraftModalOpen(true)}
+        />
+      )}
+
+      {/* Mobile Draft Modal */}
+      {isMobile && (
+        <DraftModal
+          open={draftModalOpen}
+          onOpenChange={setDraftModalOpen}
+          onDraft={(markdown) => updateCurrentContent(markdown)}
+          currentTitle={currentDocument?.title}
+          currentContent={currentDocument?.content}
         />
       )}
 
