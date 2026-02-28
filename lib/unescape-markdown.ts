@@ -13,7 +13,10 @@ export function unescapeMarkdown(text: string): string {
     .replace(/\\\(/g, '(')
     .replace(/\\\)/g, ')')
     .replace(/&#x20;/g, ' ')
-    .replace(/&nbsp;/g, ' ');
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
   // 标题（## / ###）必须单独成行：句号/问号等后紧跟 # 时，前面加空行
   out = out.replace(/([。！？.!?])(\s*)(#{1,6}\s)/g, '$1\n\n$3');
   return out;

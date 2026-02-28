@@ -99,6 +99,24 @@ function normalizeCodeBlockLanguages(markdown: string): string {
 }
 
 /**
+ * Escape JSX-like patterns that aren't valid HTML/JSX
+ * MDXEditor parses content as MDX, so `<5k` looks like invalid JSX
+ * Only escape `<` followed by non-letter characters (except valid HTML tag starts)
+ */
+function escapeInvalidJsxPatterns(markdown: string): string {
+  // Match `<` followed by:
+  // - digit (e.g., `<5k字`)
+  // - special char like #, $, @, !, etc. (e.g., `<#tag>`)
+  // But NOT:
+  // - letter (valid HTML tag like `<div>`)
+  // - `/` (closing tag like `</div>`)
+  // - `!` followed by `--` or `[` (comments/CDATA)
+  // - already escaped `&lt;`
+
+  return markdown.replace(/<(?=[^a-zA-Z/!])/g, '&lt;');
+}
+
+/**
  * Transform proxy URLs back to disk:: URLs for storage
  */
 function transformProxyUrlsToDisk(markdown: string, documentId: string): string {
@@ -127,10 +145,11 @@ export function MDXEditorCore({
   const containerRef = useRef<HTMLDivElement>(null);
   const isProcessingPaste = useRef(false);
 
-  // Transform content for rendering (disk:: -> proxy URLs, normalize languages)
+  // Transform content for rendering (disk:: -> proxy URLs, normalize languages, escape invalid JSX)
   const renderedContent = useMemo(() => {
     let transformed = transformDiskUrlsToProxy(content, documentId);
     transformed = normalizeCodeBlockLanguages(transformed);
+    transformed = escapeInvalidJsxPatterns(transformed);
     return transformed;
   }, [content, documentId]);
 
