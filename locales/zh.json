@@ -114,7 +114,8 @@
     "allDocuments": "全部文档",
     "noDocumentsYet": "暂无文档",
     "expandFolder": "展开文件夹",
-    "collapseFolder": "折叠文件夹"
+    "collapseFolder": "折叠文件夹",
+    "settings": "设置"
   },
   "documentList": {
     "rename": "重命名",

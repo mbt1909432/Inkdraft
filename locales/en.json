@@ -114,7 +114,8 @@
     "allDocuments": "All Documents",
     "noDocumentsYet": "No documents yet",
     "expandFolder": "Expand folder",
-    "collapseFolder": "Collapse folder"
+    "collapseFolder": "Collapse folder",
+    "settings": "Settings"
   },
   "documentList": {
     "rename": "Rename",
