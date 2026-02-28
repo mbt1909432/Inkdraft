@@ -22,17 +22,17 @@ export default function SettingsPage() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Settings className="h-6 w-6" />
-              Settings
+              {t('settings.title')}
             </h1>
             <p className="text-muted-foreground">
-              Manage your account settings and API keys
+              {t('settings.description')}
             </p>
           </div>
         </div>
 
         {/* Language Settings */}
         <div className="mb-6 p-4 border rounded-lg">
-          <h2 className="font-medium mb-3">Language / 语言</h2>
+          <h2 className="font-medium mb-3">{t('settings.language')}</h2>
           <div className="flex gap-2">
             <Button
               variant={locale === 'zh' ? 'default' : 'outline'}
@@ -56,13 +56,13 @@ export default function SettingsPage() {
 
         {/* API Documentation Link */}
         <div className="mt-6 p-4 border rounded-lg">
-          <h2 className="font-medium mb-2">API Documentation</h2>
+          <h2 className="font-medium mb-2">{t('settings.apiDoc')}</h2>
           <p className="text-sm text-muted-foreground mb-3">
-            Learn how to use the API to upload documents programmatically.
+            {t('settings.apiDocDesc')}
           </p>
           <Link href="/docs/api">
             <Button variant="outline" size="sm">
-              View API Docs
+              {t('settings.viewApiDocs')}
             </Button>
           </Link>
         </div>

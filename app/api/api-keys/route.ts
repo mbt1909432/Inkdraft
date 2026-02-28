@@ -32,7 +32,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('api_keys')
-      .select('id, name, key_prefix, last_used_at, created_at')
+      .select('id, name, key_prefix, last_used_at, created_at, expires_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -60,10 +60,22 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const name = body.name || 'API Key';
+    const expiresInDays = body.expires_in_days; // undefined = never expires
 
     // Validate name
     if (typeof name !== 'string' || name.length > 100) {
       return NextResponse.json({ error: 'Invalid name' }, { status: 400 });
+    }
+
+    // Validate expiration
+    let expiresAt: string | null = null;
+    if (expiresInDays !== undefined && expiresInDays !== null) {
+      if (typeof expiresInDays !== 'number' || expiresInDays <= 0) {
+        return NextResponse.json({ error: 'Invalid expiration days' }, { status: 400 });
+      }
+      const expDate = new Date();
+      expDate.setDate(expDate.getDate() + expiresInDays);
+      expiresAt = expDate.toISOString();
     }
 
     // Check max keys per user (limit to 10)
@@ -92,8 +104,9 @@ export async function POST(request: Request) {
         name,
         key_hash: keyHash,
         key_prefix: keyPrefix,
+        expires_at: expiresAt,
       })
-      .select('id, name, key_prefix, created_at')
+      .select('id, name, key_prefix, created_at, expires_at')
       .single();
 
     if (error) {

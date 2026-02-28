@@ -5,7 +5,7 @@ import { createHash } from 'crypto';
 const LOG_TAG = '[api/external/documents]';
 
 // Verify API key and return user_id
-async function verifyApiKey(authHeader: string | null): Promise<string | null> {
+async function verifyApiKey(authHeader: string | null): Promise<{ userId: string; error?: string } | null> {
   if (!authHeader) {
     console.log(LOG_TAG, 'No auth header provided');
     return null;
@@ -31,7 +31,7 @@ async function verifyApiKey(authHeader: string | null): Promise<string | null> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('api_keys')
-    .select('user_id, id')
+    .select('user_id, id, expires_at')
     .eq('key_hash', keyHash)
     .single();
 
@@ -45,6 +45,15 @@ async function verifyApiKey(authHeader: string | null): Promise<string | null> {
     return null;
   }
 
+  // Check if key is expired
+  if (data.expires_at) {
+    const expiresAt = new Date(data.expires_at);
+    if (expiresAt < new Date()) {
+      console.log(LOG_TAG, 'API key expired at:', data.expires_at);
+      return { userId: '', error: 'API key has expired' };
+    }
+  }
+
   // Update last_used_at
   await supabase
     .from('api_keys')
@@ -52,7 +61,7 @@ async function verifyApiKey(authHeader: string | null): Promise<string | null> {
     .eq('id', data.id);
 
   console.log(LOG_TAG, 'API key verified for user:', data.user_id);
-  return data.user_id;
+  return { userId: data.user_id };
 }
 
 // POST - Upload a document via API key
@@ -60,14 +69,20 @@ export async function POST(request: Request) {
   try {
     // Verify API key
     const authHeader = request.headers.get('Authorization') || request.headers.get('X-API-Key');
-    const userId = await verifyApiKey(authHeader);
+    const result = await verifyApiKey(authHeader);
 
-    if (!userId) {
+    if (!result) {
       return NextResponse.json(
         { error: 'Invalid or missing API key. Use Authorization: Bearer sk_xxx or X-API-Key: sk_xxx' },
         { status: 401 }
       );
     }
+
+    if (result.error) {
+      return NextResponse.json({ error: result.error }, { status: 401 });
+    }
+
+    const userId = result.userId;
 
     const supabase = createServiceClient();
 
@@ -163,14 +178,20 @@ export async function GET(request: Request) {
   try {
     // Verify API key
     const authHeader = request.headers.get('Authorization') || request.headers.get('X-API-Key');
-    const userId = await verifyApiKey(authHeader);
+    const result = await verifyApiKey(authHeader);
 
-    if (!userId) {
+    if (!result) {
       return NextResponse.json(
         { error: 'Invalid or missing API key' },
         { status: 401 }
       );
     }
+
+    if (result.error) {
+      return NextResponse.json({ error: result.error }, { status: 401 });
+    }
+
+    const userId = result.userId;
 
     const supabase = createServiceClient();
     const url = new URL(request.url);
