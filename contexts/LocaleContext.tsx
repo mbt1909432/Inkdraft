@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Locale, Messages } from '@/lib/i18n';
-import { getByPath, getLocaleFromCookie, setLocaleCookie } from '@/lib/i18n';
+import { getByPath, getLocaleFromCookie, setLocaleCookie, clearI18nCache } from '@/lib/i18n';
 
 import zh from '@/locales/zh.json';
 import en from '@/locales/en.json';
@@ -39,6 +39,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
     setLocaleCookie(next);
+    clearI18nCache();  // Clear cache when locale changes
   }, []);
 
   const t = useCallback(

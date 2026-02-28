@@ -31,6 +31,11 @@ export function setLocaleCookie(locale: Locale): void {
 // Client-side cache for translation lookups
 const clientCache = new Map<string, string | undefined>();
 
+// Clear cache when locale changes
+export function clearI18nCache(): void {
+  clientCache.clear();
+}
+
 function getByPathUncached(obj: unknown, path: string): string | undefined {
   const keys = path.split('.');
   let current: unknown = obj;

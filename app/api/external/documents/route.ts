@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 
@@ -6,7 +6,10 @@ const LOG_TAG = '[api/external/documents]';
 
 // Verify API key and return user_id
 async function verifyApiKey(authHeader: string | null): Promise<string | null> {
-  if (!authHeader) return null;
+  if (!authHeader) {
+    console.log(LOG_TAG, 'No auth header provided');
+    return null;
+  }
 
   // Support both "Bearer sk_xxx" and "sk_xxx" formats
   let key = authHeader;
@@ -16,21 +19,29 @@ async function verifyApiKey(authHeader: string | null): Promise<string | null> {
 
   // Validate key format
   if (!key.startsWith('sk_') || key.length < 10) {
+    console.log(LOG_TAG, 'Invalid key format, length:', key.length);
     return null;
   }
 
   // Hash the key
   const keyHash = createHash('sha256').update(key).digest('hex');
+  console.log(LOG_TAG, 'Looking up key hash:', keyHash.slice(0, 16) + '...');
 
-  // Look up the key
-  const supabase = await createClient();
+  // Look up the key using service client (bypasses RLS)
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('api_keys')
     .select('user_id, id')
     .eq('key_hash', keyHash)
     .single();
 
-  if (error || !data) {
+  if (error) {
+    console.error(LOG_TAG, 'API key lookup error:', error.message);
+    return null;
+  }
+
+  if (!data) {
+    console.log(LOG_TAG, 'No matching key found');
     return null;
   }
 
@@ -40,6 +51,7 @@ async function verifyApiKey(authHeader: string | null): Promise<string | null> {
     .update({ last_used_at: new Date().toISOString() })
     .eq('id', data.id);
 
+  console.log(LOG_TAG, 'API key verified for user:', data.user_id);
   return data.user_id;
 }
 
@@ -57,21 +69,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     // Parse request body
     const contentType = request.headers.get('content-type') || '';
 
     let title: string;
     let content: string;
-    let folderId: string | null = null;
+    let parentFolderId: string | null = null;
 
     if (contentType.includes('multipart/form-data')) {
       // Handle multipart form data (file upload)
       const formData = await request.formData();
       const file = formData.get('file') as File | null;
       const titleField = formData.get('title') as string | null;
-      folderId = formData.get('folder_id') as string | null;
+      parentFolderId = formData.get('folder_id') as string | null;
 
       if (!file) {
         return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -84,7 +96,7 @@ export async function POST(request: Request) {
       const body = await request.json();
       title = body.title || 'Untitled Document';
       content = body.content || '';
-      folderId = body.folder_id || null;
+      parentFolderId = body.folder_id || null;
     }
 
     // Validate
@@ -97,11 +109,11 @@ export async function POST(request: Request) {
     }
 
     // Verify folder belongs to user if specified
-    if (folderId) {
+    if (parentFolderId) {
       const { data: folder, error: folderError } = await supabase
         .from('folders')
         .select('id')
-        .eq('id', folderId)
+        .eq('id', parentFolderId)
         .eq('user_id', userId)
         .single();
 
@@ -117,14 +129,18 @@ export async function POST(request: Request) {
         user_id: userId,
         title,
         content,
-        folder_id: folderId,
+        parent_folder_id: parentFolderId,
       })
       .select('id, title, created_at, updated_at')
       .single();
 
     if (error) {
       console.error(LOG_TAG, 'Error creating document', error);
-      return NextResponse.json({ error: 'Failed to create document' }, { status: 500 });
+      return NextResponse.json({
+        error: 'Failed to create document',
+        details: error.message,
+        code: error.code,
+      }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -156,22 +172,22 @@ export async function GET(request: Request) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const url = new URL(request.url);
 
     // Query parameters
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const folderId = url.searchParams.get('folder_id');
+    const parentFolderId = url.searchParams.get('folder_id');
 
     let query = supabase
       .from('documents')
-      .select('id, title, created_at, updated_at, folder_id')
+      .select('id, title, created_at, updated_at, parent_folder_id')
       .eq('user_id', userId)
       .order('updated_at', { ascending: false })
       .limit(limit);
 
-    if (folderId) {
-      query = query.eq('folder_id', folderId);
+    if (parentFolderId) {
+      query = query.eq('parent_folder_id', parentFolderId);
     }
 
     const { data, error } = await query;
