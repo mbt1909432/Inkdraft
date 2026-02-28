@@ -163,6 +163,17 @@ Delete a document.
 - Maximum 100 documents per list request
 - Supports .md file upload
 
+## API Key Expiration
+
+API keys can have expiration times:
+- Never expires
+- 30 days
+- 90 days
+- 180 days
+- 1 year
+
+Expired keys return 401 error.
+
 ## Code Examples
 
 ### cURL - Upload JSON
@@ -173,7 +184,7 @@ curl -X POST https://inkdraft.app/api/external/documents \\
   -d '{"title": "My Doc", "content": "# Hello World"}'
 \`\`\`
 
-### cURL - Upload File
+### cURL - Upload Markdown File
 \`\`\`bash
 curl -X POST https://inkdraft.app/api/external/documents \\
   -H "Authorization: Bearer sk_your_api_key" \\
@@ -201,16 +212,28 @@ curl -X DELETE "https://inkdraft.app/api/external/documents/DOC_UUID" \\
   -H "Authorization: Bearer sk_your_api_key"
 \`\`\`
 
-## API Key Expiration
+## JavaScript Example
 
-API keys can have expiration times:
-- Never expires
-- 30 days
-- 90 days
-- 180 days
-- 1 year
+\`\`\`javascript
+const API_KEY = 'sk_your_api_key';
+const BASE_URL = 'https://inkdraft.app/api/external/documents';
 
-Expired keys return 401 error.
+// Upload document
+const response = await fetch(BASE_URL, {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${API_KEY}\`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    title: 'My Document',
+    content: '# Hello World\\n\\nThis is my content.',
+  }),
+});
+
+const data = await response.json();
+console.log(data.document.id);
+\`\`\`
 `;
 
   return new NextResponse(llmsTxt, {
