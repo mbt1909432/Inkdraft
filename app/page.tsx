@@ -13,6 +13,7 @@ import {
   RefreshCw,
   PenLine,
   Cloud,
+  Bot,
 } from 'lucide-react';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { LocaleSwitcher } from '@/components/locale-switcher';
@@ -179,6 +180,15 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm text-muted-foreground pt-2 border-t border-border/40">
             <span>{t('home.footer.author')}</span>
             <span className="flex items-center gap-4">
+              <a
+                href="/llms.txt"
+                target="_blank"
+                className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                aria-label="API Documentation for LLM"
+              >
+                <Bot className="h-4 w-4" />
+                {t('home.footer.api') || 'API'}
+              </a>
               <a
                 href="https://github.com/mbt1909432"
                 target="_blank"
