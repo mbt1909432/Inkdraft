@@ -4,7 +4,7 @@ import { useTranslations } from '@/contexts/LocaleContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChatPanel } from './ChatPanel';
-import { MessageSquare, X } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { useMobileStore } from '@/lib/store/mobile-store';
 
 interface MobileChatProps {
@@ -29,13 +29,6 @@ export function MobileChat({ getMarkdown, setMarkdown, documentId, saveDocument 
       <DialogContent className="h-[90vh] max-w-full w-full p-0 flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between p-4 border-b border-border shrink-0">
           <DialogTitle>{t('editor.aiAssistant')}</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setChatSheetOpen(false)}
-          >
-            <X className="h-5 w-5" />
-          </Button>
         </DialogHeader>
         <div className="flex-1 min-h-0 overflow-hidden">
           <ChatPanel
