@@ -28,18 +28,18 @@ Traditional editors treat AI as a suggestion tool. Inkdraft goes further — the
 
 ## Key Features
 
-### 🤖 AI Agent Capabilities
+### AI Agent Capabilities
 
 The embedded Agent can perform CRUD operations on your documents:
 
-| Action | What It Does |
-|--------|--------------|
+| Action | Description |
+|--------|-------------|
 | Create | Add paragraphs, generate examples, auto-continue |
 | Read | Search, summarize, and extract information |
 | Update | Polish text, rewrite paragraphs, change style |
 | Delete | Remove redundant content, clean formatting |
 
-### 📊 Built-in Acontext SDK
+### Built-in Acontext SDK
 
 Run Python code directly in the editor:
 
@@ -57,12 +57,11 @@ plt.title('Monthly Revenue')
 plt.savefig('chart.png')
 \`\`\`
 
-### 🔌 External API
+### External API
 
 Connect other Agents via RESTful API:
 
 \`\`\`bash
-# Create document via API
 curl -X POST https://your-instance/api/external/documents \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{"title": "New Doc", "content": "# Hello"}'
@@ -75,11 +74,11 @@ curl -X POST https://your-instance/api/external/documents \\
 3. **Enhance** - Select text and use AI actions
 4. **Export** - Download as MD, Word, or PDF
 
-> 💡 **Tip**: Select any text to see formatting and AI action buttons!
+> **Tip**: Select any text to see formatting and AI action buttons!
 
 ---
 
-Made with ❤️ by the Inkdraft team
+Made with love by the Inkdraft team
 `;
 
 // Ensure docs directory exists
@@ -109,10 +108,19 @@ async function takeScreenshots() {
     // Create context with stored auth if available
     // Use higher resolution for clearer screenshots
     context = await browser.newContext({
-      viewport: { width: 2560, height: 1440 },
-      deviceScaleFactor: 2, // 2x for retina-like quality
+      viewport: { width: 1920, height: 1080 },
+      deviceScaleFactor: 1,
       storageState: hasStoredAuth ? AUTH_FILE : undefined,
+      locale: 'en-US',
     });
+
+    // Set locale cookie to ensure English UI
+    await context.addCookies([{
+      name: 'NEXT_LOCALE',
+      value: 'en',
+      domain: 'localhost',
+      path: '/',
+    }]);
 
     const page = await context.newPage();
 
