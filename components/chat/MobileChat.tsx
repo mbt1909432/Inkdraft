@@ -44,7 +44,6 @@ export function MobileChat({ getMarkdown, setMarkdown, documentId, saveDocument 
             documentId={documentId}
             useAcontext={true}
             saveDocument={saveDocument}
-            onClose={() => setChatSheetOpen(false)}
             className="h-full"
           />
         </div>
