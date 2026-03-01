@@ -19,6 +19,8 @@ import {
   Download,
   FileText,
   FileType,
+  FileCode,
+  Copy,
   MessageSquare,
   Eye,
   EyeOff,
@@ -39,6 +41,20 @@ import { downloadAsPdf } from '@/lib/export/markdown-to-pdf';
 import { toast } from 'sonner';
 import { useMobileStore } from '@/lib/store/mobile-store';
 import { DiskFileBrowser } from '@/components/disk/DiskFileBrowser';
+
+// Download markdown as .md file
+function downloadAsMarkdown(content: string, title: string) {
+  const filename = `${title.replace(/[/\\?%*:|"<>]/g, '_')}.md`;
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 interface MobileToolbarProps {
   onSave?: () => Promise<void>;
@@ -189,6 +205,27 @@ export function MobileToolbar({
             <DropdownMenuSeparator />
 
             {/* Export */}
+            <DropdownMenuItem
+              onClick={async () => {
+                if (currentDocument?.content) {
+                  await navigator.clipboard.writeText(currentDocument.content);
+                  toast.success(t('editor.copySuccess') || 'Copied to clipboard');
+                }
+              }}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              {t('editor.copyMarkdown') || 'Copy Markdown'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                if (currentDocument) {
+                  downloadAsMarkdown(currentDocument.content ?? '', currentDocument.title);
+                }
+              }}
+            >
+              <FileCode className="h-4 w-4 mr-2" />
+              {t('editor.markdownFile')}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 downloadAsWord(currentDocument.content ?? '', currentDocument.title, documentId)

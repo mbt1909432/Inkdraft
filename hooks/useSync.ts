@@ -53,13 +53,15 @@ export function useSync({ enabled = true, onDocumentChange }: UseSyncOptions = {
         }
       )
       .subscribe((status) => {
+        console.log('[useSync] Realtime subscription status:', status);
+        // Only set synced if subscribed, don't override with offline/error
+        // based on realtime status - the browser's online/offline events
+        // are more reliable for connectivity status
         if (status === 'SUBSCRIBED') {
           setSyncStatus('synced');
-        } else if (status === 'CLOSED') {
-          setSyncStatus('offline');
-        } else if (status === 'CHANNEL_ERROR') {
-          setSyncStatus('error');
         }
+        // Don't set offline/error based on realtime status
+        // Realtime can fail even when user is online
       });
 
     channelRef.current = channel;
@@ -72,16 +74,24 @@ export function useSync({ enabled = true, onDocumentChange }: UseSyncOptions = {
     };
   }, [enabled, currentDocument, setCurrentDocument, updateDocument, setSyncStatus, onDocumentChange, supabase]);
 
-  // Check online status
+  // Check online status - this is the primary source of truth for connectivity
   useEffect(() => {
-    const handleOnline = () => setSyncStatus('synced');
-    const handleOffline = () => setSyncStatus('offline');
+    const handleOnline = () => {
+      console.log('[useSync] Browser online event');
+      setSyncStatus('synced');
+    };
+    const handleOffline = () => {
+      console.log('[useSync] Browser offline event');
+      setSyncStatus('offline');
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Set initial status
-    setSyncStatus(navigator.onLine ? 'synced' : 'offline');
+    // Set initial status based on browser connectivity
+    const initialStatus = navigator.onLine ? 'synced' : 'offline';
+    console.log('[useSync] Initial status:', initialStatus, 'navigator.onLine:', navigator.onLine);
+    setSyncStatus(initialStatus);
 
     return () => {
       window.removeEventListener('online', handleOnline);
