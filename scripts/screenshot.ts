@@ -107,8 +107,10 @@ async function takeScreenshots() {
     });
 
     // Create context with stored auth if available
+    // Use higher resolution for clearer screenshots
     context = await browser.newContext({
-      viewport: { width: 1920, height: 1080 },
+      viewport: { width: 2560, height: 1440 },
+      deviceScaleFactor: 2, // 2x for retina-like quality
       storageState: hasStoredAuth ? AUTH_FILE : undefined,
     });
 
