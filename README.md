@@ -2,40 +2,79 @@
 
 A modern Markdown editor with AI-powered writing assistance.
 
-[中文文档](#中文文档)
+[中文文档](README.zh.md) | English
+
+![](docs/screenshot-editor.png)
 
 ## Features
 
-### Core Editing
-- **Markdown Editor** - Built on MDXEditor with rich text and source mode switching
-- **Live Outline** - Auto-generated document table of contents
-- **Auto Save** - Automatic cloud sync with manual Ctrl+S support
-- **Document Management** - Folders, pinning, renaming, batch delete
-- **Import/Export** - Import .md files, export to Markdown / Word / PDF
+### Rich Markdown Editing
 
-### AI Assistance
-- **AI Chat Assistant** - Chat with AI for writing suggestions
-- **AI Drafting** - Generate document drafts from title and instructions
-- **Text Polishing** - AI-powered refine, expand, or condense selected text
-- **Context Memory** - AI remembers conversation context for coherent assistance
+- **Dual Mode Editing** - Switch seamlessly between rich text (WYSIWYG) and source code mode
+- **Live Outline** - Auto-generated document table of contents with click-to-navigate
+- **Smart Formatting** - Toolbar for quick text formatting (bold, italic, underline, strikethrough, code, headings)
+- **Selection Toolbar** - Context-aware toolbar appears when text is selected for quick formatting or AI actions
+- **Code Blocks** - Syntax highlighting for multiple programming languages
+- **Tables & Lists** - Full support for tables, ordered and unordered lists
+- **Auto Save** - Automatic cloud sync every 30 seconds with manual Ctrl+S support
+- **Sync Status** - Visual indicator showing cloud sync state (synced, syncing, offline)
+
+### AI Writing Assistant
+
+- **AI Chat Panel** - Dedicated chat interface for writing assistance
+  - Ask questions about your document
+  - Get writing suggestions and improvements
+  - Multi-turn conversations with context memory
+- **AI Draft Generation** - Generate complete document drafts from title and instructions
+- **Text Selection Actions** - Select any text and:
+  - **Polish** - Improve writing style and clarity
+  - **Expand** - Add more detail and elaboration
+  - **Condense** - Summarize and shorten
+  - **Fix Grammar** - Correct grammar and spelling errors
+  - **Custom** - Provide your own instruction
+- **Context Memory** - AI remembers previous conversations for coherent assistance
+- **Token Counter** - Shows estimated token usage for context-aware interactions
+
+### Document Management
+
+- **Folder Organization** - Create folders to organize documents
+- **Document Pinning** - Pin important documents to the top
+- **Quick Rename** - Rename documents directly from the sidebar
+- **Batch Operations** - Select multiple documents for batch delete
+- **Search & Filter** - Quickly find documents by title
+- **Import Markdown** - Import existing .md files with automatic format detection
+
+### Export Options
+
+- **Copy Markdown** - One-click copy entire document to clipboard
+- **Download as .md** - Export as Markdown file
+- **Export to Word** - Generate .docx file with proper formatting
+- **Export to PDF** - Create PDF with preserved styling
 
 ### User Experience
-- **Responsive Design** - Desktop and mobile support
-- **Dark/Light Theme** - Auto-follow system or manual switch
-- **Multi-language** - Chinese and English support
-- **Sync Status** - Real-time cloud sync indicator
+
+- **Responsive Design** - Fully functional on desktop and mobile devices
+- **Dark/Light Theme** - Auto-follow system preference or manual toggle
+- **Multi-language** - Interface available in English and Chinese
+- **Resizable Panels** - Drag to resize sidebar, outline, and chat panels
+- **Keyboard Shortcuts** - Ctrl+S to save, standard editing shortcuts
 
 ### External API
-- **RESTful API** - Document CRUD via API Key authentication
-- **llms.txt** - LLM-friendly API documentation
+
+- **RESTful API** - Full CRUD operations via HTTP endpoints
+- **API Key Authentication** - Secure access with configurable key expiration
+- **llms.txt** - LLM-friendly API documentation at `/llms.txt`
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
-- **UI Components**: shadcn/ui + Tailwind CSS
-- **Editor**: MDXEditor + CodeMirror
-- **Backend**: Supabase (Auth + Database + Realtime)
-- **AI Integration**: OpenAI / Anthropic / Google and more
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 15 (App Router) |
+| UI Components | shadcn/ui + Tailwind CSS |
+| Editor | MDXEditor + CodeMirror |
+| State Management | Zustand |
+| Backend | Supabase (Auth + Database + Realtime) |
+| AI Integration | OpenAI / Anthropic / Google Gemini |
 
 ## Quick Start
 
@@ -43,6 +82,7 @@ A modern Markdown editor with AI-powered writing assistance.
 
 - Node.js 18+
 - npm / yarn / pnpm
+- Supabase account
 
 ### Installation
 
@@ -61,7 +101,7 @@ npm install
 
 3. Configure environment variables
 
-Copy `.env.example` to `.env.local` and fill in:
+Copy `.env.example` to `.env.local`:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
@@ -100,156 +140,54 @@ npx playwright test       # Run E2E tests
 ├── app/                    # Next.js App Router
 │   ├── document/[id]/      # Document editor page
 │   ├── documents/          # Document list page
+│   ├── settings/           # Settings page
 │   ├── api/                # API routes
-│   └── ...
+│   │   ├── external/       # External API endpoints
+│   │   ├── ai/             # AI-related endpoints
+│   │   └── draft/          # Draft generation
+│   └── llms.txt/           # LLM-friendly API docs
 ├── components/
 │   ├── editor/             # Editor components
+│   │   ├── MarkdownEditor  # Main editor wrapper
+│   │   ├── EditorToolbar   # Desktop toolbar
+│   │   ├── MobileToolbar   # Mobile toolbar
+│   │   ├── SelectionToolbar# Text selection actions
+│   │   └── DraftModal      # AI draft dialog
 │   ├── chat/               # AI chat components
+│   │   ├── ChatPanel       # Main chat interface
+│   │   └── MobileChat      # Mobile chat dialog
 │   ├── sidebar/            # Sidebar components
+│   │   ├── Sidebar         # Desktop sidebar
+│   │   ├── MobileSidebar   # Mobile sidebar
+│   │   └── OutlineView     # Document outline
 │   └── ui/                 # shadcn/ui components
-├── hooks/                  # Custom hooks
+├── hooks/                  # Custom React hooks
 ├── lib/
 │   ├── store/              # Zustand state management
-│   ├── supabase/           # Supabase clients
-│   └── ...
+│   ├── supabase/           # Supabase client configs
+│   ├── export/             # Export utilities
+│   └── editor/             # Editor utilities
+├── contexts/               # React contexts
+│   └── LocaleContext       # i18n provider
 └── public/                 # Static assets
 ```
 
-## External API
+## API Documentation
 
-Visit `/llms.txt` for LLM-friendly API documentation including:
-- Authentication (API Key)
-- Document CRUD endpoints
-- Request/Response formats
+Access the LLM-friendly API documentation at `/llms.txt` which includes:
+
+- Authentication via API Key
+- Document CRUD endpoints:
+  - `GET /api/external/documents` - List all documents
+  - `POST /api/external/documents` - Create document
+  - `GET /api/external/documents/[id]` - Get single document
+  - `PUT /api/external/documents/[id]` - Update document
+  - `DELETE /api/external/documents/[id]` - Delete document
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
-
-MIT
-
----
-
-# 中文文档
-
-一个现代化的 Markdown 编辑器，支持 AI 辅助写作。
-
-## 功能特性
-
-### 核心编辑功能
-- **Markdown 编辑器** - 基于 MDXEditor，支持富文本和源码模式切换
-- **实时大纲** - 自动生成文档目录结构
-- **自动保存** - 自动同步到云端，支持手动 Ctrl+S 保存
-- **文档管理** - 支持文件夹分类、置顶、重命名、批量删除
-- **导入导出** - 支持 .md 文件导入，可导出为 Markdown / Word / PDF
-
-### AI 辅助功能
-- **AI 对话助手** - 与 AI 对话，获取写作建议
-- **AI 起稿** - 根据标题和说明自动生成文档草稿
-- **文字润色** - 选中文字后使用 AI 进行润色、扩写、缩写等
-- **上下文记忆** - AI 记住对话上下文，提供连贯的写作辅助
-
-### 用户体验
-- **响应式设计** - 支持桌面端和移动端
-- **深色/浅色主题** - 自动跟随系统或手动切换
-- **多语言支持** - 支持中文和英文
-- **实时同步状态** - 显示云端同步状态
-
-### 外部 API
-- **RESTful API** - 通过 API Key 访问文档 CRUD 接口
-- **llms.txt** - 提供 LLM 友好的 API 文档
-
-## 技术栈
-
-- **前端框架**: Next.js 15 (App Router)
-- **UI 组件**: shadcn/ui + Tailwind CSS
-- **编辑器**: MDXEditor + CodeMirror
-- **后端服务**: Supabase (Auth + Database + Realtime)
-- **AI 集成**: 支持 OpenAI / Anthropic / Google 等多模型
-
-## 快速开始
-
-### 环境要求
-
-- Node.js 18+
-- npm / yarn / pnpm
-
-### 安装步骤
-
-1. 克隆项目
-
-```bash
-git clone https://github.com/mbt1909432/Inkdraft.git
-cd Inkdraft
-```
-
-2. 安装依赖
-
-```bash
-npm install
-```
-
-3. 配置环境变量
-
-复制 `.env.example` 到 `.env.local` 并填写：
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=你的Supabase项目URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=你的Supabase公钥
-```
-
-4. 启动开发服务器
-
-```bash
-npm run dev
-```
-
-访问 http://localhost:3000
-
-## 可用命令
-
-```bash
-npm run dev      # 启动开发服务器
-npm run build    # 生产构建
-npm run start    # 启动生产服务器
-npm run lint     # 运行 ESLint
-```
-
-## E2E 测试
-
-测试使用 Playwright，运行在 3005 端口：
-
-```bash
-npm run dev -- -p 3005    # 在 3005 端口启动开发服务器
-npx playwright test       # 运行 E2E 测试
-```
-
-## 项目结构
-
-```
-├── app/                    # Next.js App Router
-│   ├── document/[id]/      # 文档编辑页面
-│   ├── documents/          # 文档列表页面
-│   ├── api/                # API 路由
-│   └── ...
-├── components/
-│   ├── editor/             # 编辑器组件
-│   ├── chat/               # AI 对话组件
-│   ├── sidebar/            # 侧边栏组件
-│   └── ui/                 # shadcn/ui 组件
-├── hooks/                  # 自定义 Hooks
-├── lib/
-│   ├── store/              # Zustand 状态管理
-│   ├── supabase/           # Supabase 客户端
-│   └── ...
-└── public/                 # 静态资源
-```
-
-## 外部 API 文档
-
-访问 `/llms.txt` 获取 LLM 友好的 API 文档，包含：
-- 认证方式 (API Key)
-- 文档 CRUD 接口
-- 请求/响应格式
-
-## 许可证
 
 MIT
