@@ -18,43 +18,68 @@ const AUTH_FILE = path.join(process.cwd(), 'playwright', '.auth', 'user.json');
 const TEST_EMAIL = process.env.TEST_USER_EMAIL || '1138932382@qq.com';
 const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || '123456';
 
-const DEMO_CONTENT = `# Inkdraft - Agent-Controllable Markdown Editor
+const DEMO_CONTENT = `# Getting Started with Inkdraft
+
+Welcome to Inkdraft, an **Agent-Controllable Markdown Editor** that revolutionizes how you write and manage documents.
 
 ## Why Inkdraft?
 
-Traditional editors treat AI as a suggestion tool. Inkdraft goes further — **the AI Agent can directly modify your documents**.
+Traditional editors treat AI as a suggestion tool. Inkdraft goes further — the AI Agent can **directly modify your documents** without copy-paste.
 
 ## Key Features
 
-### AI Agent Capabilities
-- **Create** - Add paragraphs, generate examples, auto-continue content
-- **Delete** - Remove redundant content, batch clean formatting
-- **Modify** - Polish copy, rewrite paragraphs, change style
-- **Query** - Quick retrieval, summarization, comparison
+### 🤖 AI Agent Capabilities
 
-### Built-in Acontext SDK
-- Run Python code for data processing
-- Write results back to documents
-- No switching between tools
+The embedded Agent can perform CRUD operations on your documents:
 
-## Code Example
+| Action | What It Does |
+|--------|--------------|
+| Create | Add paragraphs, generate examples, auto-continue |
+| Read | Search, summarize, and extract information |
+| Update | Polish text, rewrite paragraphs, change style |
+| Delete | Remove redundant content, clean formatting |
+
+### 📊 Built-in Acontext SDK
+
+Run Python code directly in the editor:
 
 \`\`\`python
 import pandas as pd
+import matplotlib.pyplot as plt
 
-# Data analysis example
-data = pd.read_csv('sales.csv')
-summary = data.groupby('region').sum()
-print(summary)
+# Load and analyze data
+df = pd.read_csv('sales.csv')
+monthly = df.groupby('month')['revenue'].sum()
+
+# Generate visualization
+monthly.plot(kind='bar')
+plt.title('Monthly Revenue')
+plt.savefig('chart.png')
 \`\`\`
 
-## Get Started
+### 🔌 External API
 
-1. Clone the repository
-2. Install dependencies
-3. Start the server
+Connect other Agents via RESTful API:
 
-> This is a demo document showcasing Inkdraft's capabilities.
+\`\`\`bash
+# Create document via API
+curl -X POST https://your-instance/api/external/documents \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{"title": "New Doc", "content": "# Hello"}'
+\`\`\`
+
+## Quick Start
+
+1. **Create** - Click "New Document" to start
+2. **Write** - Use rich text or source mode
+3. **Enhance** - Select text and use AI actions
+4. **Export** - Download as MD, Word, or PDF
+
+> 💡 **Tip**: Select any text to see formatting and AI action buttons!
+
+---
+
+Made with ❤️ by the Inkdraft team
 `;
 
 // Ensure docs directory exists

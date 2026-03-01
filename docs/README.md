@@ -4,6 +4,8 @@
 
 Inkdraft 是一款**支持 AI Agent 可控的 Markdown 编辑器**，让「写文档 + 写代码 + 跑分析」在一处优雅完成。
 
+[English](README.en.md) | 中文
+
 ## 核心特性
 
 ### Agent 直接操作文档
