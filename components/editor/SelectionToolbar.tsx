@@ -13,13 +13,30 @@ import {
   getSelectionRectangle,
 } from '@mdxeditor/editor';
 import { getSelectionAsMarkdown } from '@/lib/editor/getSelectionAsMarkdown';
-import { $getSelection, $isRangeSelection } from 'lexical';
+import { $getSelection, $isRangeSelection, TextFormatType } from 'lexical';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Bold, Italic, Underline, Strikethrough, Code, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const TOOLBAR_OFFSET = 45; // Increased offset to prevent overlapping selected text
-const ACTIONS: { id: string; label: string }[] = [
+
+// Formatting actions
+const FORMAT_ACTIONS: { id: string; icon: React.ReactNode; label: string; format: TextFormatType }[] = [
+  { id: 'bold', icon: <Bold className="h-3.5 w-3.5" />, label: '加粗', format: 'bold' },
+  { id: 'italic', icon: <Italic className="h-3.5 w-3.5" />, label: '斜体', format: 'italic' },
+  { id: 'underline', icon: <Underline className="h-3.5 w-3.5" />, label: '下划线', format: 'underline' },
+  { id: 'strikethrough', icon: <Strikethrough className="h-3.5 w-3.5" />, label: '删除线', format: 'strikethrough' },
+  { id: 'code', icon: <Code className="h-3.5 w-3.5" />, label: '行内代码', format: 'code' },
+];
+
+// AI actions
+const AI_ACTIONS: { id: string; label: string }[] = [
   { id: 'polish', label: '润色' },
   { id: 'expand', label: '扩写' },
   { id: 'shrink', label: '缩写' },
@@ -44,6 +61,24 @@ export function SelectionToolbar() {
 
   const [toolbarState, setToolbarState] = useState<ToolbarState>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  // Apply text formatting (bold, italic, etc.)
+  const applyFormat = useCallback((format: TextFormatType) => {
+    if (!activeEditor) return;
+
+    activeEditor.update(() => {
+      const sel = $getSelection();
+      if ($isRangeSelection(sel)) {
+        sel.formatText(format);
+      }
+    });
+  }, [activeEditor]);
+
+  // Handle format button click
+  const handleFormat = useCallback((format: TextFormatType) => {
+    applyFormat(format);
+    setToolbarState(null);
+  }, [applyFormat]);
 
   useEffect(() => {
     if (
@@ -129,7 +164,7 @@ export function SelectionToolbar() {
     if (!toolbarState) return undefined;
     const { rect } = toolbarState;
     const toolbarHeight = 40;
-    const toolbarWidth = 320;
+    const toolbarWidth = 420; // Increased width for more buttons
 
     // Calculate position - try above first, then below if not enough space
     // rect from getSelectionRectangle should be viewport-relative
@@ -174,25 +209,59 @@ export function SelectionToolbar() {
       style={style}
       onMouseDown={(e) => e.preventDefault()}
     >
-      <Sparkles className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <div className="flex flex-wrap items-center gap-1">
-        {ACTIONS.map(({ id, label }) => (
+      {/* Formatting buttons */}
+      {FORMAT_ACTIONS.map(({ id, icon, label, format }) => (
+        <Button
+          key={id}
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          disabled={!!loadingAction}
+          onClick={() => handleFormat(format)}
+          title={label}
+        >
+          {icon}
+        </Button>
+      ))}
+
+      {/* Divider */}
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* AI actions dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
-            key={id}
             variant="ghost"
             size="sm"
-            className="h-7 text-xs"
+            className="h-7 gap-1 text-xs"
             disabled={!!loadingAction}
-            onClick={() => runAction(id)}
           >
-            {loadingAction === id ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {loadingAction ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                处理中
+              </>
             ) : (
-              label
+              <>
+                <Sparkles className="h-3.5 w-3.5" />
+                AI
+                <ChevronDown className="h-3 w-3" />
+              </>
             )}
           </Button>
-        ))}
-      </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="min-w-[100px]">
+          {AI_ACTIONS.map(({ id, label }) => (
+            <DropdownMenuItem
+              key={id}
+              onClick={() => runAction(id)}
+              disabled={!!loadingAction}
+            >
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 
