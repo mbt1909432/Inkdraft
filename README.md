@@ -1,109 +1,125 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Inkdraft
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+一个现代化的 Markdown 编辑器，支持 AI 辅助写作。
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## 功能特性
 
-## Features
+### 核心编辑功能
+- **Markdown 编辑器** - 基于 MDXEditor，支持富文本和源码模式切换
+- **实时大纲** - 自动生成文档目录结构
+- **自动保存** - 自动同步到云端，支持手动 Ctrl+S 保存
+- **文档管理** - 支持文件夹分类、置顶、重命名、批量删除
+- **导入导出** - 支持 .md 文件导入，可导出为 Markdown / Word / PDF
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+### AI 辅助功能
+- **AI 对话助手** - 与 AI 对话，获取写作建议
+- **AI 起稿** - 根据标题和说明自动生成文档草稿
+- **文字润色** - 选中文字后使用 AI 进行润色、扩写、缩写等
+- **上下文记忆** - AI 记住对话上下文，提供连贯的写作辅助
 
-## Demo
+### 用户体验
+- **响应式设计** - 支持桌面端和移动端
+- **深色/浅色主题** - 自动跟随系统或手动切换
+- **多语言支持** - 支持中文和英文
+- **实时同步状态** - 显示云端同步状态
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+### 外部 API
+- **RESTful API** - 通过 API Key 访问文档 CRUD 接口
+- **llms.txt** - 提供 LLM 友好的 API 文档
 
-## Deploy to Vercel
+## 技术栈
 
-Vercel deployment will guide you through creating a Supabase account and project.
+- **前端框架**: Next.js 15 (App Router)
+- **UI 组件**: shadcn/ui + Tailwind CSS
+- **编辑器**: MDXEditor + CodeMirror
+- **后端服务**: Supabase (Auth + Database + Realtime)
+- **AI 集成**: 支持 OpenAI / Anthropic / Google 等多模型
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+## 快速开始
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+### 环境要求
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+- Node.js 18+
+- npm / yarn / pnpm
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+### 安装步骤
 
-## Clone and run locally
+1. 克隆项目
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+```bash
+git clone https://github.com/mbt1909432/Inkdraft.git
+cd Inkdraft
+```
 
-2. Create a Next.js app using the Supabase Starter template npx command
+2. 安装依赖
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+```bash
+npm install
+```
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+3. 配置环境变量
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+复制 `.env.example` 到 `.env.local` 并填写：
 
-3. Use `cd` to change into the app's directory
+```env
+NEXT_PUBLIC_SUPABASE_URL=你的Supabase项目URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=你的Supabase公钥
+```
 
-   ```bash
-   cd with-supabase-app
-   ```
+4. 启动开发服务器
 
-4. Rename `.env.example` to `.env.local` and update the following:
+```bash
+npm run dev
+```
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+访问 http://localhost:3000
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+## 可用命令
 
-5. You can now run the Next.js local development server:
+```bash
+npm run dev      # 启动开发服务器
+npm run build    # 生产构建
+npm run start    # 启动生产服务器
+npm run lint     # 运行 ESLint
+```
 
-   ```bash
-   npm run dev
-   ```
+## E2E 测试
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+测试使用 Playwright，运行在 3005 端口：
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+```bash
+npm run dev -- -p 3005    # 在 3005 端口启动开发服务器
+npx playwright test       # 运行 E2E 测试
+```
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+## 项目结构
 
-## Feedback and issues
+```
+├── app/                    # Next.js App Router
+│   ├── document/[id]/      # 文档编辑页面
+│   ├── documents/          # 文档列表页面
+│   ├── api/                # API 路由
+│   └── ...
+├── components/
+│   ├── editor/             # 编辑器组件
+│   ├── chat/               # AI 对话组件
+│   ├── sidebar/            # 侧边栏组件
+│   └── ui/                 # shadcn/ui 组件
+├── hooks/                  # 自定义 Hooks
+├── lib/
+│   ├── store/              # Zustand 状态管理
+│   ├── supabase/           # Supabase 客户端
+│   └── ...
+└── public/                 # 静态资源
+```
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+## 外部 API 文档
 
-## More Supabase examples
+访问 `/llms.txt` 获取 LLM 友好的 API 文档，包含：
+- 认证方式 (API Key)
+- 文档 CRUD 接口
+- 请求/响应格式
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+## License
+
+MIT
