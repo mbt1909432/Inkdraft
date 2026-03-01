@@ -80,6 +80,8 @@
     "saveDocument": "Save document",
     "download": "Download",
     "downloadDocument": "Download document",
+    "copyMarkdown": "Copy Markdown",
+    "copySuccess": "Copied to clipboard",
     "markdownFile": "Markdown (.md)",
     "wordDoc": "Word (.docx)",
     "pdfDoc": "PDF (.pdf)",

@@ -80,6 +80,8 @@
     "saveDocument": "保存文档",
     "download": "下载",
     "downloadDocument": "下载文档",
+    "copyMarkdown": "复制 Markdown",
+    "copySuccess": "已复制到剪贴板",
     "markdownFile": "Markdown 文件 (.md)",
     "wordDoc": "Word 文档 (.docx)",
     "pdfDoc": "PDF 文档 (.pdf)",

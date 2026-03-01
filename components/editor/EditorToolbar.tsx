@@ -27,6 +27,8 @@ import {
   FileCode,
   MessageSquare,
   FolderOpen,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeSwitcher } from '@/components/theme-switcher';
@@ -299,6 +301,17 @@ export function EditorToolbar({ onSave, onTogglePin, onLogout, onDraft, onOpenCh
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={async () => {
+                if (currentDocument?.content) {
+                  await navigator.clipboard.writeText(currentDocument.content);
+                  toast.success(t('editor.copySuccess') || 'Copied to clipboard');
+                }
+              }}
+            >
+              <Copy className="h-4 w-4" />
+              {t('editor.copyMarkdown') || 'Copy Markdown'}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 if (currentDocument) {
