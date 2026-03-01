@@ -10,6 +10,8 @@
 |:---:|:---:|:---:|
 | ![](docs/screenshot-editor-chat.png) | ![](docs/screenshot-documents.png) | ![](docs/screenshot-mobile.png) |
 
+> 📖 **[查看完整功能文档](docs/README.md)** - 每个功能模块的详细介绍
+
 ## 为什么选择 Inkdraft？
 
 传统编辑器把 AI 当作建议工具。Inkdraft 更进一步 —— **AI Agent 可以直接修改你的文档**，而不只是提供建议。

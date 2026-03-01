@@ -10,6 +10,8 @@ An **Agent-Controllable Markdown Editor** that enables seamless "document writin
 |:---:|:---:|:---:|
 | ![](docs/screenshot-editor-chat.png) | ![](docs/screenshot-documents.png) | ![](docs/screenshot-mobile.png) |
 
+> 📖 **[查看完整功能文档](docs/README.md)** - 每个功能模块的详细介绍
+
 ## Why Inkdraft?
 
 Traditional editors treat AI as a suggestion tool. Inkdraft goes further — **the AI Agent can directly modify your documents**, not just give advice.
