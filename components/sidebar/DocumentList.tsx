@@ -326,12 +326,22 @@ function DocumentItem({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {onRename && (
-              <DropdownMenuItem onClick={() => setIsRenaming(true)}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsRenaming(true);
+                }}
+              >
                 <Edit2 className="h-4 w-4 mr-2" />
                 {t('documentList.rename')}
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={onTogglePin}>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePin();
+              }}
+            >
               {document.is_pinned ? (
                 <>
                   <PinOff className="h-4 w-4 mr-2" />
