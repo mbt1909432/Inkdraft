@@ -33,11 +33,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DocumentList } from './DocumentList';
 import { TemplatePicker } from '@/components/templates/TemplatePicker';
+import { NewDocumentDialog } from './NewDocumentDialog';
 import type { Document, Folder as FolderType } from '@/lib/types';
 import type { DocumentTemplate } from '@/lib/templates';
 
 interface SidebarProps {
-  onCreateDocument?: (folderId?: string | null, template?: { name: string; content: string }) => Promise<void>;
+  onCreateDocument?: (folderId?: string | null, options?: { title?: string; content?: string }) => Promise<void>;
   onCreateFolder?: (parentId?: string | null) => Promise<void>;
   onImportMarkdown?: (folderId?: string | null) => void;
   onDeleteDocument?: (id: string) => Promise<void>;
@@ -73,6 +74,8 @@ export function Sidebar({
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [newDocDialogOpen, setNewDocDialogOpen] = useState(false);
+  const [newDocTemplate, setNewDocTemplate] = useState<{ name: string; content: string } | undefined>(undefined);
 
   // Derive filtered documents during render, not in effect
   const filteredDocuments = useMemo(() => {
@@ -90,16 +93,21 @@ export function Sidebar({
     );
   }, [searchQuery, documents, activeFolderId]);
 
-  const handleCreateDocument = useCallback(async () => {
+  const handleCreateDocument = useCallback(() => {
+    setNewDocTemplate(undefined);
+    setNewDocDialogOpen(true);
+  }, []);
+
+  const handleConfirmCreateDocument = useCallback(async (title: string) => {
     if (onCreateDocument) {
       setIsCreating(true);
       try {
-        await onCreateDocument(activeFolderId);
+        await onCreateDocument(activeFolderId, newDocTemplate ? { title, content: newDocTemplate.content } : { title });
       } finally {
         setIsCreating(false);
       }
     }
-  }, [onCreateDocument, activeFolderId]);
+  }, [onCreateDocument, activeFolderId, newDocTemplate]);
 
   const handleCreateFolder = useCallback(async () => {
     if (onCreateFolder) {
@@ -107,16 +115,10 @@ export function Sidebar({
     }
   }, [onCreateFolder, activeFolderId]);
 
-  const handleSelectTemplate = useCallback(async (template: DocumentTemplate) => {
-    if (onCreateDocument) {
-      setIsCreating(true);
-      try {
-        await onCreateDocument(activeFolderId, { name: template.nameZh, content: template.content });
-      } finally {
-        setIsCreating(false);
-      }
-    }
-  }, [onCreateDocument, activeFolderId]);
+  const handleSelectTemplate = useCallback((template: DocumentTemplate) => {
+    setNewDocTemplate({ name: template.nameZh, content: template.content });
+    setNewDocDialogOpen(true);
+  }, []);
 
   const rootFolders = folders.filter((f) => !f.parent_folder_id);
   // All Documents：显示全部；选中某文件夹：只显示该文件夹内文档；搜索时：显示搜索结果
@@ -221,6 +223,14 @@ export function Sidebar({
           open={templatePickerOpen}
           onOpenChange={setTemplatePickerOpen}
           onSelect={handleSelectTemplate}
+        />
+
+        {/* New Document Dialog */}
+        <NewDocumentDialog
+          open={newDocDialogOpen}
+          onOpenChange={setNewDocDialogOpen}
+          onCreate={handleConfirmCreateDocument}
+          defaultTitle={newDocTemplate?.name || ''}
         />
 
         {/* Navigation */}

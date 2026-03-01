@@ -76,12 +76,12 @@ export default function EditorPage() {
     init();
   }, [loadDocuments, loadFolders, router]);
 
-  const handleCreateDocument = async (folderId?: string | null, template?: { name: string; content: string }) => {
+  const handleCreateDocument = async (folderId?: string | null, options?: { title?: string; content?: string }) => {
     setIsCreating(true);
     const toastId = toast.loading('创建文档中...');
     try {
-      console.log('[handleCreateDocument] Creating document...', template ? 'with template' : 'blank');
-      const doc = await createNewDocument(folderId, template ? { title: template.name, content: template.content } : undefined);
+      console.log('[handleCreateDocument] Creating document...', options ? 'with options' : 'blank');
+      const doc = await createNewDocument(folderId, options);
       console.log('[handleCreateDocument] Document created:', { id: doc.id, title: doc.title });
       toast.success('文档创建成功', { id: toastId });
       console.log('[handleCreateDocument] Navigating to:', `/document/${doc.id}`);
@@ -96,7 +96,7 @@ export default function EditorPage() {
   };
 
   const handleSelectTemplate = async (template: DocumentTemplate) => {
-    await handleCreateDocument(null, { name: template.nameZh, content: template.content });
+    await handleCreateDocument(null, { title: template.nameZh, content: template.content });
     setTemplatePickerOpen(false);
   };
 

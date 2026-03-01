@@ -69,6 +69,7 @@ export function useDocument() {
     folderId?: string | null,
     options?: { title?: string; content?: string }
   ) => {
+    // Use provided title, or generate Untitled
     const nextTitle = options?.title || getNextUntitledTitle(documents);
     try {
       const doc = await createDocument({

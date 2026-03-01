@@ -189,9 +189,9 @@ export default function DocumentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId]);
 
-  const handleCreateDocument = async (folderId?: string | null, template?: { name: string; content: string }) => {
+  const handleCreateDocument = async (folderId?: string | null, options?: { title?: string; content?: string }) => {
     try {
-      const doc = await createNewDocument(folderId, template ? { title: template.name, content: template.content } : undefined);
+      const doc = await createNewDocument(folderId, options);
       // Use window.location.href for a full page load to avoid client-side routing issues
       window.location.href = `/document/${doc.id}`;
     } catch (error) {
