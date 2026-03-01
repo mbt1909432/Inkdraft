@@ -3,8 +3,12 @@ import { test as setup, expect } from '@playwright/test';
 const authFile = 'playwright/.auth/user.json';
 
 setup('authenticate', async ({ page }) => {
-  const email = process.env.TEST_USER_EMAIL || '1138932382@qq.com';
-  const password = process.env.TEST_USER_PASSWORD || '123456';
+  const email = process.env.TEST_USER_EMAIL;
+  const password = process.env.TEST_USER_PASSWORD;
+
+  if (!email || !password) {
+    throw new Error('TEST_USER_EMAIL and TEST_USER_PASSWORD environment variables are required');
+  }
 
   console.log('[auth.setup] Logging in as', email);
 

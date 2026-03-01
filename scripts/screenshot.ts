@@ -14,9 +14,9 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const DOCS_DIR = path.join(process.cwd(), 'docs');
 const AUTH_FILE = path.join(process.cwd(), 'playwright', '.auth', 'user.json');
 
-// Test credentials (same as E2E tests)
-const TEST_EMAIL = process.env.TEST_USER_EMAIL || '1138932382@qq.com';
-const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || '123456';
+// Test credentials from environment
+const TEST_EMAIL = process.env.TEST_USER_EMAIL;
+const TEST_PASSWORD = process.env.TEST_USER_PASSWORD;
 
 const DEMO_CONTENT = `# Getting Started with Inkdraft
 
@@ -129,6 +129,10 @@ async function takeScreenshots() {
     let currentUrl = page.url();
 
     if (currentUrl.includes('/login')) {
+      if (!TEST_EMAIL || !TEST_PASSWORD) {
+        console.error('❌ TEST_USER_EMAIL and TEST_USER_PASSWORD environment variables are required');
+        return;
+      }
       console.log('   Logging in...');
       await page.fill('#email', TEST_EMAIL);
       await page.fill('#password', TEST_PASSWORD);
