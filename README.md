@@ -4,7 +4,11 @@ An **Agent-Controllable Markdown Editor** that enables seamless "document writin
 
 [中文文档](README.zh.md) | English
 
-![](docs/screenshot-editor.png)
+## Screenshots
+
+| Editor with AI Chat | Document List | Mobile |
+|:---:|:---:|:---:|
+| ![](docs/screenshot-editor-chat.png) | ![](docs/screenshot-documents.png) | ![](docs/screenshot-mobile.png) |
 
 ## Why Inkdraft?
 

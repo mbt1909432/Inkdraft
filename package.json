@@ -4,7 +4,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "screenshot": "npx tsx scripts/screenshot.ts"
   },
   "dependencies": {
     "@acontext/acontext": "^0.1.12",

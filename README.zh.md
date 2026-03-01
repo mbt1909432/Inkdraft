@@ -4,7 +4,11 @@
 
 [English](README.md) | 中文文档
 
-![](docs/screenshot-editor.png)
+## 截图预览
+
+| 编辑器 + AI 对话 | 文档列表 | 移动端 |
+|:---:|:---:|:---:|
+| ![](docs/screenshot-editor-chat.png) | ![](docs/screenshot-documents.png) | ![](docs/screenshot-mobile.png) |
 
 ## 为什么选择 Inkdraft？
 
