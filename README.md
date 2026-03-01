@@ -2,15 +2,23 @@
 
 An **Agent-Controllable Markdown Editor** that enables seamless "document writing + code execution + data analysis" in one elegant interface.
 
-[中文文档](README.zh.md) | English
+[中文](README.zh.md) | English
 
 ## Screenshots
 
-| Editor with AI Chat | Document List | Mobile |
-|:---:|:---:|:---:|
-| ![](docs/screenshot-editor-chat.png) | ![](docs/screenshot-documents.png) | ![](docs/screenshot-mobile.png) |
+### Editor with AI Chat
 
-> 📖 **[查看完整功能文档](docs/README.md)** - 每个功能模块的详细介绍
+![](docs/screenshot-editor-chat.png)
+
+### Document List
+
+![](docs/screenshot-documents.png)
+
+### Mobile
+
+![](docs/screenshot-mobile.png)
+
+> 📖 **[View Full Documentation](docs/README.en.md)** - Detailed feature descriptions
 
 ## Why Inkdraft?
 
@@ -44,7 +52,7 @@ The entire process completes in one interface — no switching between local env
 This application is no longer a traditional "App". By connecting to LLM's text and tool APIs, it has evolved into a genuine **Agent App**:
 
 **Internal Agent:**
-- Directly面向 real users
+- Directly serves real users
 - Handles document editing, data analysis, content generation
 - Acts like a "collaborative partner embedded in the editor"
 
