@@ -247,6 +247,41 @@
   background: hsl(40 50% 75%) !important;
 }
 
+/* CodeMirror source mode selection styles */
+.markdown-editor-wrapper .cm-editor ::selection,
+.markdown-editor-wrapper .cm-line ::selection,
+.markdown-editor-wrapper .cm-content ::selection {
+  background: hsl(210 100% 85%) !important;
+}
+
+.dark .markdown-editor-wrapper .cm-editor ::selection,
+.dark .markdown-editor-wrapper .cm-line ::selection,
+.dark .markdown-editor-wrapper .cm-content ::selection {
+  background: hsl(210 60% 50%) !important;
+  color: hsl(0 0% 100%) !important;
+}
+
+/* CodeMirror selection highlight class */
+.markdown-editor-wrapper .cm-editor .cm-selectionBackground,
+.markdown-editor-wrapper .cm-editor .cm-focused .cm-selectionBackground {
+  background: hsl(210 100% 85%) !important;
+}
+
+.dark .markdown-editor-wrapper .cm-editor .cm-selectionBackground,
+.dark .markdown-editor-wrapper .cm-editor .cm-focused .cm-selectionBackground {
+  background: hsl(210 60% 50%) !important;
+}
+
+.guofeng .markdown-editor-wrapper .cm-editor ::selection,
+.guofeng .markdown-editor-wrapper .cm-editor .cm-selectionBackground {
+  background: hsl(40 35% 80%) !important;
+}
+
+.sepia .markdown-editor-wrapper .cm-editor ::selection,
+.sepia .markdown-editor-wrapper .cm-editor .cm-selectionBackground {
+  background: hsl(40 50% 75%) !important;
+}
+
 /* MDXEditor Toolbar Styles */
 .markdown-editor-wrapper .mdxeditor-toolbar {
   background: hsl(var(--background)) !important;
