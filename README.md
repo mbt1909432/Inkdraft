@@ -1,5 +1,135 @@
 # Inkdraft
 
+A modern Markdown editor with AI-powered writing assistance.
+
+[中文文档](#中文文档)
+
+## Features
+
+### Core Editing
+- **Markdown Editor** - Built on MDXEditor with rich text and source mode switching
+- **Live Outline** - Auto-generated document table of contents
+- **Auto Save** - Automatic cloud sync with manual Ctrl+S support
+- **Document Management** - Folders, pinning, renaming, batch delete
+- **Import/Export** - Import .md files, export to Markdown / Word / PDF
+
+### AI Assistance
+- **AI Chat Assistant** - Chat with AI for writing suggestions
+- **AI Drafting** - Generate document drafts from title and instructions
+- **Text Polishing** - AI-powered refine, expand, or condense selected text
+- **Context Memory** - AI remembers conversation context for coherent assistance
+
+### User Experience
+- **Responsive Design** - Desktop and mobile support
+- **Dark/Light Theme** - Auto-follow system or manual switch
+- **Multi-language** - Chinese and English support
+- **Sync Status** - Real-time cloud sync indicator
+
+### External API
+- **RESTful API** - Document CRUD via API Key authentication
+- **llms.txt** - LLM-friendly API documentation
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **UI Components**: shadcn/ui + Tailwind CSS
+- **Editor**: MDXEditor + CodeMirror
+- **Backend**: Supabase (Auth + Database + Realtime)
+- **AI Integration**: OpenAI / Anthropic / Google and more
+
+## Quick Start
+
+### Requirements
+
+- Node.js 18+
+- npm / yarn / pnpm
+
+### Installation
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/mbt1909432/Inkdraft.git
+cd Inkdraft
+```
+
+2. Install dependencies
+
+```bash
+npm install
+```
+
+3. Configure environment variables
+
+Copy `.env.example` to `.env.local` and fill in:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-anon-key
+```
+
+4. Start development server
+
+```bash
+npm run dev
+```
+
+Visit http://localhost:3000
+
+## Available Commands
+
+```bash
+npm run dev      # Start development server
+npm run build    # Production build
+npm run start    # Start production server
+npm run lint     # Run ESLint
+```
+
+## E2E Testing
+
+Tests use Playwright on port 3005:
+
+```bash
+npm run dev -- -p 3005    # Start dev server on port 3005
+npx playwright test       # Run E2E tests
+```
+
+## Project Structure
+
+```
+├── app/                    # Next.js App Router
+│   ├── document/[id]/      # Document editor page
+│   ├── documents/          # Document list page
+│   ├── api/                # API routes
+│   └── ...
+├── components/
+│   ├── editor/             # Editor components
+│   ├── chat/               # AI chat components
+│   ├── sidebar/            # Sidebar components
+│   └── ui/                 # shadcn/ui components
+├── hooks/                  # Custom hooks
+├── lib/
+│   ├── store/              # Zustand state management
+│   ├── supabase/           # Supabase clients
+│   └── ...
+└── public/                 # Static assets
+```
+
+## External API
+
+Visit `/llms.txt` for LLM-friendly API documentation including:
+- Authentication (API Key)
+- Document CRUD endpoints
+- Request/Response formats
+
+## License
+
+MIT
+
+---
+
+# 中文文档
+
 一个现代化的 Markdown 编辑器，支持 AI 辅助写作。
 
 ## 功能特性
@@ -120,6 +250,6 @@ npx playwright test       # 运行 E2E 测试
 - 文档 CRUD 接口
 - 请求/响应格式
 
-## License
+## 许可证
 
 MIT
