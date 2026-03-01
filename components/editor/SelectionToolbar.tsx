@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Loader2, Sparkles } from 'lucide-react';
 
-const TOOLBAR_OFFSET = 10;
+const TOOLBAR_OFFSET = 45; // Increased offset to prevent overlapping selected text
 const ACTIONS: { id: string; label: string }[] = [
   { id: 'polish', label: '润色' },
   { id: 'expand', label: '扩写' },
@@ -130,7 +130,21 @@ export function SelectionToolbar() {
     const { rect } = toolbarState;
     const toolbarHeight = 40;
     const toolbarWidth = 320;
-    const top = rect.top - toolbarHeight - TOOLBAR_OFFSET;
+
+    // Calculate position - try above first, then below if not enough space
+    // rect from getSelectionRectangle should be viewport-relative
+    const selectionBottom = rect.top + rect.height;
+    let top = rect.top - toolbarHeight - TOOLBAR_OFFSET;
+
+    // If toolbar would go above viewport, position it below the selection instead
+    if (top < 10) {
+      top = selectionBottom + TOOLBAR_OFFSET / 2;
+    }
+
+    // Ensure toolbar doesn't go below viewport
+    const maxTop = window.innerHeight - toolbarHeight - 10;
+    top = Math.min(top, maxTop);
+
     const left = Math.max(
       8,
       Math.min(
