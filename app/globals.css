@@ -247,39 +247,49 @@
   background: hsl(40 50% 75%) !important;
 }
 
-/* CodeMirror source mode selection styles */
+/* CodeMirror source mode selection styles - use semi-transparent background */
 .markdown-editor-wrapper .cm-editor ::selection,
 .markdown-editor-wrapper .cm-line ::selection,
 .markdown-editor-wrapper .cm-content ::selection {
-  background: hsl(210 100% 85%) !important;
+  background: hsl(210 100% 85% / 0.5) !important;
 }
 
 .dark .markdown-editor-wrapper .cm-editor ::selection,
 .dark .markdown-editor-wrapper .cm-line ::selection,
 .dark .markdown-editor-wrapper .cm-content ::selection {
-  background: hsl(210 60% 50%) !important;
-  color: hsl(0 0% 100%) !important;
+  background: hsl(210 60% 50% / 0.4) !important;
 }
 
-/* CodeMirror selection highlight class */
+/* CodeMirror selection highlight class - semi-transparent */
 .markdown-editor-wrapper .cm-editor .cm-selectionBackground,
 .markdown-editor-wrapper .cm-editor .cm-focused .cm-selectionBackground {
-  background: hsl(210 100% 85%) !important;
+  background: hsl(210 100% 85% / 0.5) !important;
 }
 
 .dark .markdown-editor-wrapper .cm-editor .cm-selectionBackground,
 .dark .markdown-editor-wrapper .cm-editor .cm-focused .cm-selectionBackground {
-  background: hsl(210 60% 50%) !important;
+  background: hsl(210 60% 50% / 0.4) !important;
+}
+
+/* CodeMirror selection layer - ensure text is visible */
+.markdown-editor-wrapper .cm-editor .cm-selectionLayer .cm-selectionBackground {
+  background: hsl(210 100% 85% / 0.4) !important;
+}
+
+.dark .markdown-editor-wrapper .cm-editor .cm-selectionLayer .cm-selectionBackground {
+  background: hsl(210 60% 50% / 0.35) !important;
 }
 
 .guofeng .markdown-editor-wrapper .cm-editor ::selection,
-.guofeng .markdown-editor-wrapper .cm-editor .cm-selectionBackground {
-  background: hsl(40 35% 80%) !important;
+.guofeng .markdown-editor-wrapper .cm-editor .cm-selectionBackground,
+.guofeng .markdown-editor-wrapper .cm-editor .cm-selectionLayer .cm-selectionBackground {
+  background: hsl(40 35% 80% / 0.5) !important;
 }
 
 .sepia .markdown-editor-wrapper .cm-editor ::selection,
-.sepia .markdown-editor-wrapper .cm-editor .cm-selectionBackground {
-  background: hsl(40 50% 75%) !important;
+.sepia .markdown-editor-wrapper .cm-editor .cm-selectionBackground,
+.sepia .markdown-editor-wrapper .cm-editor .cm-selectionLayer .cm-selectionBackground {
+  background: hsl(40 50% 75% / 0.5) !important;
 }
 
 /* MDXEditor Toolbar Styles */
