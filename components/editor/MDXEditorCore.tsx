@@ -144,6 +144,8 @@ export function MDXEditorCore({
   const editorRef = useRef<MDXEditorMethods>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isProcessingPaste = useRef(false);
+  const isInternalChange = useRef(false);
+  const lastSyncedContent = useRef<string>(content);
 
   // Transform content for rendering (disk:: -> proxy URLs, normalize languages, escape invalid JSX)
   const renderedContent = useMemo(() => {
@@ -157,10 +159,18 @@ export function MDXEditorCore({
   const handleChange = (markdown: string) => {
     // Skip if we're processing a paste to avoid double conversion
     if (isProcessingPaste.current) return;
+    // Mark as internal change to prevent sync effect from resetting editor
+    isInternalChange.current = true;
     // MDXEditor may produce HTML entities like &#x20; for spaces in tables/code blocks
     const unescapedMarkdown = unescapeMarkdown(markdown);
     const originalMarkdown = transformProxyUrlsToDisk(unescapedMarkdown, documentId);
+    // Update last synced content to prevent unnecessary resets
+    lastSyncedContent.current = originalMarkdown;
     onChange(originalMarkdown);
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isInternalChange.current = false;
+    }, 50);
   };
 
   // Handle paste event to convert markdown syntax
@@ -201,14 +211,30 @@ export function MDXEditorCore({
   // Sync store content into editor when document switches or content is set externally (e.g. draft)
   useEffect(() => {
     if (!editorRef.current) return;
+
+    // Skip if this is an internal change (from user typing)
+    if (isInternalChange.current) return;
+
+    // Skip if content hasn't actually changed from what we last synced
+    if (content === lastSyncedContent.current) return;
+
     const value = typeof renderedContent === 'string' ? renderedContent : '';
     const currentEditorContent = editorRef.current.getMarkdown();
     // Compare transformed content
     const currentOriginal = transformProxyUrlsToDisk(currentEditorContent, documentId);
+
+    // Only update if there's a real difference (external change like draft replacement)
     if (currentOriginal !== content) {
+      lastSyncedContent.current = content;
       editorRef.current.setMarkdown(value);
     }
   }, [documentId, content, renderedContent]);
+
+  // Reset tracking when document changes
+  useEffect(() => {
+    lastSyncedContent.current = content;
+    isInternalChange.current = false;
+  }, [documentId]);
 
   // Plugins configuration - memoized to prevent recreation
   const plugins = useMemo(
