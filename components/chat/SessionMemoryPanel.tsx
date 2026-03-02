@@ -173,7 +173,7 @@ export function SessionMemoryPanel({
           <Database className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
@@ -195,7 +195,7 @@ export function SessionMemoryPanel({
         )}
 
         {data && !loading && (
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="flex-1 min-h-0 pr-4">
             <div className="space-y-4">
               {/* Stats Overview */}
               <Card>
