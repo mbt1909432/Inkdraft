@@ -52,7 +52,7 @@ export function OutlineView({ className }: OutlineViewProps) {
     });
   }, []);
 
-  if (!outlineOpen || outline.length === 0) {
+  if (!outlineOpen) {
     return null;
   }
 
@@ -77,56 +77,60 @@ export function OutlineView({ className }: OutlineViewProps) {
       <h3 className="font-semibold text-sm mb-3 text-muted-foreground uppercase tracking-wide">
         {t('editor.outline')}
       </h3>
-      <nav>
-        <ul className="space-y-1">
-          {outline.map((item, index) => {
-            if (isUnderCollapsed(outline, index, collapsedIds)) return null;
-            const hasChild = hasChildren(outline, index);
-            const isCollapsed = collapsedIds.has(item.id);
-            return (
-              <li key={item.id}>
-                <div className="flex items-center gap-0.5 min-w-0">
-                  <button
-                    type="button"
-                    aria-label={isCollapsed ? t('editor.outlineExpand') : t('editor.outlineCollapse')}
-                    className={cn(
-                      'shrink-0 p-0.5 rounded hover:bg-accent',
-                      !hasChild && 'invisible'
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (hasChild) toggleCollapse(item.id);
-                    }}
-                  >
-                    {hasChild ? (
-                      isCollapsed ? (
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                      )
-                    ) : null}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleClick(item)}
-                    className={cn(
-                      'flex-1 text-left text-sm py-1 px-2 rounded hover:bg-accent transition-colors truncate min-w-0',
-                      item.level === 1 && 'font-semibold',
-                      item.level === 2 && 'pl-2',
-                      item.level === 3 && 'pl-4',
-                      item.level === 4 && 'pl-6',
-                      item.level === 5 && 'pl-8',
-                      item.level === 6 && 'pl-10'
-                    )}
-                  >
-                    {item.text}
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+      {outline.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t('editor.outlineEmpty')}</p>
+      ) : (
+        <nav>
+          <ul className="space-y-1">
+            {outline.map((item, index) => {
+              if (isUnderCollapsed(outline, index, collapsedIds)) return null;
+              const hasChild = hasChildren(outline, index);
+              const isCollapsed = collapsedIds.has(item.id);
+              return (
+                <li key={item.id}>
+                  <div className="flex items-center gap-0.5 min-w-0">
+                    <button
+                      type="button"
+                      aria-label={isCollapsed ? t('editor.outlineExpand') : t('editor.outlineCollapse')}
+                      className={cn(
+                        'shrink-0 p-0.5 rounded hover:bg-accent',
+                        !hasChild && 'invisible'
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (hasChild) toggleCollapse(item.id);
+                      }}
+                    >
+                      {hasChild ? (
+                        isCollapsed ? (
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                        )
+                      ) : null}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleClick(item)}
+                      className={cn(
+                        'flex-1 text-left text-sm py-1 px-2 rounded hover:bg-accent transition-colors truncate min-w-0',
+                        item.level === 1 && 'font-semibold',
+                        item.level === 2 && 'pl-2',
+                        item.level === 3 && 'pl-4',
+                        item.level === 4 && 'pl-6',
+                        item.level === 5 && 'pl-8',
+                        item.level === 6 && 'pl-10'
+                      )}
+                    >
+                      {item.text}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      )}
     </aside>
   );
 }

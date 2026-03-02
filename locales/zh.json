@@ -68,6 +68,7 @@
     "outline": "大纲",
     "outlineExpand": "展开",
     "outlineCollapse": "折叠",
+    "outlineEmpty": "文档中没有标题",
     "showOutline": "显示大纲",
     "hideOutline": "隐藏大纲",
     "pin": "置顶",

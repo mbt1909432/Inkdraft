@@ -68,6 +68,7 @@
     "outline": "Outline",
     "outlineExpand": "Expand",
     "outlineCollapse": "Collapse",
+    "outlineEmpty": "No headings in document",
     "showOutline": "Show outline",
     "hideOutline": "Hide outline",
     "pin": "Pin",
