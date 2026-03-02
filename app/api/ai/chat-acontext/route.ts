@@ -272,6 +272,8 @@ export async function POST(request: Request) {
     let sandboxId: string | undefined;
 
     const readable = new ReadableStream({
+      type: 'bytes',
+      autoAllocateChunkSize: 1024,
       async start(controller) {
         try {
           // Send session info first
@@ -331,6 +333,8 @@ export async function POST(request: Request) {
                     `data: ${JSON.stringify({ type: 'content', content: delta.content })}\n\n`
                   )
                 );
+                // Yield to event loop to allow immediate flushing
+                await new Promise(resolve => setImmediate(resolve));
               }
 
               // Accumulate tool calls
