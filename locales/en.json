@@ -197,6 +197,10 @@
     "collapsed": "Collapse",
     "expandAll": "Expand all",
     "lines": "lines",
+    "speed": {
+      "label": "Typewriter Speed",
+      "title": "Adjust the typewriter effect speed"
+    },
     "tools": {
       "title": "Tool Calls",
       "searchReplace": "search_replace (replace)",
@@ -222,7 +226,8 @@
       "notMatched": "Not matched",
       "apply": "Apply",
       "skip": "Skip",
-      "result": "Result"
+      "result": "Result",
+      "saving": "Saving..."
     },
     "confirm": {
       "hint": "Choose \"Apply\" or \"Skip\" for each edit, then:",
@@ -230,7 +235,8 @@
       "places": "places",
       "cancelled": "Cancelled",
       "appliedCount": "Applied {count} edits",
-      "cancelledHint": "Cancelled, no changes made"
+      "cancelledHint": "Cancelled, no changes made",
+      "refreshSession": "Are you sure you want to refresh the session? This will clear all chat history, but uploaded files will be preserved."
     },
     "loop": {
       "processing": "Processing",
@@ -244,10 +250,14 @@
       "loadFailed": "Failed to load chat history",
       "requestFailed": "Request failed",
       "unknownError": "Unknown error",
-      "sendFailed": "Send failed"
+      "sendFailed": "Send failed",
+      "refreshFailed": "Failed to refresh session",
+      "saveFailed": "Failed to save"
     },
     "empty": {
       "toolOnly": "(Tool calls only, no additional explanation)"
-    }
+    },
+    "refreshSession": "Refresh session",
+    "refreshSuccess": "Session refreshed"
   }
 }

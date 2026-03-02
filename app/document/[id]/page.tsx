@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useDocument } from '@/hooks/useDocument';
@@ -189,7 +189,7 @@ export default function DocumentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId]);
 
-  const handleCreateDocument = async (folderId?: string | null, options?: { title?: string; content?: string }) => {
+  const handleCreateDocument = useCallback(async (folderId?: string | null, options?: { title?: string; content?: string }) => {
     try {
       const doc = await createNewDocument(folderId, options);
       // Use window.location.href for a full page load to avoid client-side routing issues
@@ -197,9 +197,9 @@ export default function DocumentPage() {
     } catch (error) {
       console.error('Error creating document:', error);
     }
-  };
+  }, [createNewDocument]);
 
-  const handleCreateFolder = async (parentId?: string | null) => {
+  const handleCreateFolder = useCallback(async (parentId?: string | null) => {
     const name = prompt('Enter folder name:');
     if (name?.trim()) {
       try {
@@ -208,13 +208,13 @@ export default function DocumentPage() {
         console.error('Error creating folder:', error);
       }
     }
-  };
+  }, [createNewFolder]);
 
-  const handleImportMarkdown = () => {
+  const handleImportMarkdown = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -275,14 +275,14 @@ export default function DocumentPage() {
     } finally {
       setIsImporting(false);
     }
-  };
+  }, [createNewDocument, t]);
 
-  const handleSelectDocument = (id: string) => {
+  const handleSelectDocument = useCallback((id: string) => {
     // Use window.location.href for a full page load to avoid client-side routing issues
     window.location.href = `/document/${id}`;
-  };
+  }, []);
 
-  const handleDeleteDocument = async (id: string) => {
+  const handleDeleteDocument = useCallback(async (id: string) => {
     console.log('[handleDeleteDocument] Called with id:', id);
     if (confirm('Are you sure you want to delete this document?')) {
       const toastId = toast.loading('Deleting document...');
@@ -301,9 +301,9 @@ export default function DocumentPage() {
     } else {
       console.log('[handleDeleteDocument] User cancelled');
     }
-  };
+  }, [removeDocument, currentDocument, router]);
 
-  const handleBatchDelete = async (ids: string[]) => {
+  const handleBatchDelete = useCallback(async (ids: string[]) => {
     if (ids.length === 0) return;
     if (!confirm(`Are you sure you want to delete ${ids.length} document(s)?`)) return;
 
@@ -330,9 +330,9 @@ export default function DocumentPage() {
     } else {
       toast.error(`Deleted ${successCount}, failed ${failCount}`, { id: toastId });
     }
-  };
+  }, [removeDocument, currentDocument, router]);
 
-  const handleDeleteFolder = async (id: string) => {
+  const handleDeleteFolder = useCallback(async (id: string) => {
     if (confirm('Are you sure you want to delete this folder?')) {
       try {
         await removeFolder(id);
@@ -340,29 +340,29 @@ export default function DocumentPage() {
         console.error('Error deleting folder:', error);
       }
     }
-  };
+  }, [removeFolder]);
 
-  const handleRenameFolder = async (id: string, name: string) => {
+  const handleRenameFolder = useCallback(async (id: string, name: string) => {
     try {
       await renameFolder(id, name);
     } catch (error) {
       console.error('Error renaming folder:', error);
     }
-  };
+  }, [renameFolder]);
 
-  const handleRenameDocument = async (id: string, title: string) => {
+  const handleRenameDocument = useCallback(async (id: string, title: string) => {
     try {
       await renameDocument(id, title);
     } catch (error) {
       console.error('Error renaming document:', error);
     }
-  };
+  }, [renameDocument]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     await save();
-  };
+  }, [save]);
 
-  const handleTogglePin = async () => {
+  const handleTogglePin = useCallback(async () => {
     if (currentDocument) {
       try {
         await pinDocument(currentDocument.id);
@@ -370,13 +370,13 @@ export default function DocumentPage() {
         console.error('Error toggling pin:', error);
       }
     }
-  };
+  }, [pinDocument, currentDocument]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/');
-  };
+  }, [router]);
 
   if (isLoading) {
     return (

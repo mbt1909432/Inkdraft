@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 import { useTranslations } from '@/contexts/LocaleContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,7 +49,7 @@ interface SidebarProps {
   onSelectDocument?: (id: string) => void;
 }
 
-export function Sidebar({
+export const Sidebar = memo(function Sidebar({
   onCreateDocument,
   onCreateFolder,
   onImportMarkdown,
@@ -61,15 +61,14 @@ export function Sidebar({
   onSelectDocument,
 }: SidebarProps) {
   const t = useTranslations();
-  const {
-    sidebarOpen,
-    toggleSidebar,
-    documents,
-    folders,
-    currentDocument,
-    activeFolderId,
-    setActiveFolderId,
-  } = useDocumentStore();
+  // Use shallow comparison to only re-render when these specific values change
+  const sidebarOpen = useDocumentStore((state) => state.sidebarOpen);
+  const toggleSidebar = useDocumentStore((state) => state.toggleSidebar);
+  const documents = useDocumentStore((state) => state.documents);
+  const folders = useDocumentStore((state) => state.folders);
+  const currentDocument = useDocumentStore((state) => state.currentDocument);
+  const activeFolderId = useDocumentStore((state) => state.activeFolderId);
+  const setActiveFolderId = useDocumentStore((state) => state.setActiveFolderId);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -298,7 +297,7 @@ export function Sidebar({
       </aside>
     </>
   );
-}
+});
 
 interface FolderItemProps {
   folder: FolderType;
@@ -315,7 +314,7 @@ interface FolderItemProps {
   onBatchDelete?: (ids: string[]) => Promise<void>;
 }
 
-function FolderItem({
+const FolderItem = memo(function FolderItem({
   folder,
   folders,
   documents,
@@ -436,4 +435,4 @@ function FolderItem({
       ) : null}
     </div>
   );
-}
+});

@@ -197,6 +197,10 @@
     "collapsed": "收起",
     "expandAll": "展开全部",
     "lines": "行",
+    "speed": {
+      "label": "打字机速度",
+      "title": "调整打字机效果的速度"
+    },
     "tools": {
       "title": "工具调用",
       "searchReplace": "search_replace（替换）",
@@ -222,7 +226,8 @@
       "notMatched": "未匹配",
       "apply": "应用",
       "skip": "不应用",
-      "result": "执行结果"
+      "result": "执行结果",
+      "saving": "正在保存..."
     },
     "confirm": {
       "hint": "对每条编辑选择「应用」或「不应用」，然后：",
@@ -230,7 +235,8 @@
       "places": "处",
       "cancelled": "取消",
       "appliedCount": "已应用 {count} 处编辑",
-      "cancelledHint": "已取消，未写入文档"
+      "cancelledHint": "已取消，未写入文档",
+      "refreshSession": "确定要刷新会话吗？这将清空所有聊天记录，但保留已上传的文件。"
     },
     "loop": {
       "processing": "处理中",
@@ -244,10 +250,14 @@
       "loadFailed": "加载聊天记录失败",
       "requestFailed": "请求失败",
       "unknownError": "未知错误",
-      "sendFailed": "发送失败"
+      "sendFailed": "发送失败",
+      "refreshFailed": "刷新会话失败",
+      "saveFailed": "保存失败"
     },
     "empty": {
       "toolOnly": "（仅执行了工具调用，无额外说明）"
-    }
+    },
+    "refreshSession": "刷新会话",
+    "refreshSuccess": "会话已刷新"
   }
 }

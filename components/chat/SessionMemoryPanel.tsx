@@ -106,10 +106,12 @@ function JsonView({ data, title }: { data: unknown; title: string }) {
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <CollapsibleTrigger className="flex items-center gap-1 text-sm font-medium cursor-pointer hover:text-primary w-full">
-        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        {title}
-        <CopyButton text={jsonStr} />
+      <CollapsibleTrigger asChild>
+        <div className="flex items-center gap-1 text-sm font-medium cursor-pointer hover:text-primary w-full">
+          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {title}
+          <CopyButton text={jsonStr} />
+        </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
         <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto max-h-60 whitespace-pre-wrap break-all">
@@ -173,7 +175,7 @@ export function SessionMemoryPanel({
           <Database className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-4xl max-h-[85vh] flex flex-col overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
@@ -262,14 +264,16 @@ export function SessionMemoryPanel({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="py-2">
-                  <Collapsible>
-                    <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground cursor-pointer hover:text-primary">
-                      <ChevronRight className="h-4 w-4" />
-                      View Full System Prompt
+                  <Collapsible className="w-full">
+                    <div className="flex items-center gap-1">
+                      <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground cursor-pointer hover:text-primary">
+                        <ChevronRight className="h-4 w-4" />
+                        View Full System Prompt
+                      </CollapsibleTrigger>
                       <CopyButton text={data.systemPrompt.current} />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto max-h-80 whitespace-pre-wrap break-words">
+                    </div>
+                    <CollapsibleContent className="w-full">
+                      <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto max-h-80 whitespace-pre-wrap break-words w-full max-w-full">
                         {data.systemPrompt.current}
                       </pre>
                     </CollapsibleContent>

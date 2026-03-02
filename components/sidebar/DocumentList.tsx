@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useTranslations } from '@/contexts/LocaleContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ interface DocumentListProps {
   onBatchDelete?: (ids: string[]) => Promise<void>;
 }
 
-export function DocumentList({
+export const DocumentList = memo(function DocumentList({
   documents,
   currentDocumentId,
   onSelectDocument,
@@ -182,7 +182,7 @@ export function DocumentList({
       </ul>
     </div>
   );
-}
+});
 
 interface DocumentItemProps {
   document: Document;

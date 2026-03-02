@@ -1,18 +1,24 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { flushSync } from 'react-dom';
 import { marked } from 'marked';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Loader2, Send, MessageSquare, X, Check, Ban, StopCircle, History, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Send, MessageSquare, X, Check, Ban, StopCircle, History, ChevronDown, ChevronUp, Settings, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { applyEditTool } from '@/lib/editor/apply-edit-tools';
 import { sanitizeHtml } from '@/lib/chat/sanitize-html';
 import { useTranslations } from '@/contexts/LocaleContext';
 import { SessionMemoryPanel } from './SessionMemoryPanel';
+import { StreamingMarkdown } from './StreamingMarkdown';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 /** Transform disk:: URLs to proxy URLs for rendering in chat */
 function transformDiskUrlsInContent(content: string, documentId: string): string {
@@ -26,24 +32,52 @@ function transformDiskUrlsInContent(content: string, documentId: string): string
   );
 }
 
-/** Renders message content as Markdown (prose styles for headings, lists, etc.) */
+/** Streaming text with typewriter cursor - optimized for real-time display */
+function StreamingText({
+  content,
+  className,
+}: {
+  content: string;
+  className?: string;
+}) {
+  return (
+    <span className={cn('whitespace-pre-wrap break-words', className)}>
+      {content}
+      {/* Animated cursor */}
+      <span className="inline-block w-0.5 h-[1.1em] ml-0.5 bg-current align-middle animate-[blink_1s_step-end_infinite]" />
+    </span>
+  );
+}
+
+/** Renders message content - plain text during streaming, Markdown after */
 function ChatMessageContent({
   content,
   placeholder,
   className,
   documentId,
+  isStreaming = false,
 }: {
   content: string;
   placeholder?: string;
   className?: string;
   documentId?: string;
+  isStreaming?: boolean;
 }) {
   const [html, setHtml] = useState('');
+
+  // Only parse Markdown when NOT streaming (for performance)
   useEffect(() => {
     if (!content?.trim()) {
       setHtml('');
       return;
     }
+
+    // Skip Markdown parsing during streaming for better performance
+    if (isStreaming) {
+      setHtml('');
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       try {
@@ -51,23 +85,34 @@ function ChatMessageContent({
         const transformedContent = documentId
           ? transformDiskUrlsInContent(content, documentId)
           : content;
-        console.log('[ChatMessageContent] Original:', content);
-        console.log('[ChatMessageContent] Transformed:', transformedContent);
-        console.log('[ChatMessageContent] documentId:', documentId);
-        const out = await marked.parse(transformedContent);
-        console.log('[ChatMessageContent] Parsed HTML:', out);
-        if (!cancelled) setHtml(sanitizeHtml(typeof out === 'string' ? out : ''));
+        // Enable breaks: true to convert single \n to <br>
+        const out = await marked.parse(transformedContent, { breaks: true, gfm: true });
+        const sanitizedHtml = sanitizeHtml(typeof out === 'string' ? out : '');
+        // Debug: log original content vs parsed HTML
+        console.log('[ChatMessageContent] Markdown解析', {
+          originalNewlines: (content.match(/\n/g) || []).length,
+          parsedBrTags: (sanitizedHtml.match(/<br>/g) || []).length,
+          contentPreview: content.slice(0, 100),
+          htmlPreview: sanitizedHtml.slice(0, 200),
+        });
+        if (!cancelled) setHtml(sanitizedHtml);
       } catch (err) {
         console.error('[ChatMessageContent] Error:', err);
         if (!cancelled) setHtml('');
       }
     })();
     return () => { cancelled = true; };
-  }, [content, documentId]);
+  }, [content, documentId, isStreaming]);
 
   if (!content?.trim() && placeholder) {
     return <span className={className}>{placeholder}</span>;
   }
+
+  // During streaming: show plain text with animated cursor
+  if (isStreaming) {
+    return <StreamingText content={content} className={className} />;
+  }
+
   if (!html) {
     return <span className={cn('whitespace-pre-wrap break-words', className)}>{content}</span>;
   }
@@ -441,9 +486,11 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const t = useTranslations();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [typewriterSpeed, setTypewriterSpeed] = useState(3); // 1=slow, 5=fast, 10=instant
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingToolCalls, setStreamingToolCalls] = useState<Array<{ name: string; arguments: string }>>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
@@ -571,7 +618,7 @@ export function ChatPanel({
     );
   };
 
-  const applyPendingEdit = (messageId: string) => {
+  const applyPendingEdit = async (messageId: string) => {
     const msg = messages.find((m) => m.id === messageId);
     if (!msg?.pendingApply || !msg.toolCalls?.length) return;
     const base = msg.initialMarkdown ?? msg.pendingNewMarkdown ?? getMarkdown();
@@ -590,12 +637,10 @@ export function ChatPanel({
       errorsPerTool.push(result.error);
       if (result.applied) currentMarkdown = result.newMarkdown;
     }
-    setMarkdown(currentMarkdown);
-    // Immediately save document after applying edits
-    if (appliedPerTool.some(Boolean) && saveDocument) {
-      saveDocument();
-    }
+
     const appliedCount = appliedPerTool.filter(Boolean).length;
+
+    // Update messages state first
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== messageId) return m;
@@ -614,6 +659,41 @@ export function ChatPanel({
         };
       })
     );
+
+    // Apply markdown and save to database
+    if (appliedCount > 0) {
+      // Update local state
+      setMarkdown(currentMarkdown);
+
+      // Save directly to database via API
+      if (documentId) {
+        const saveToastId = toast.loading(t('chat.edit.saving') || 'Saving...');
+
+        try {
+          const res = await fetch(`/api/documents/${documentId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: currentMarkdown }),
+          });
+
+          if (!res.ok) {
+            throw new Error('Failed to save document');
+          }
+
+          toast.success(t('chat.confirm.appliedCount', { count: appliedCount }), {
+            id: saveToastId,
+          });
+        } catch (error) {
+          console.error('[ChatPanel] Save error:', error);
+          toast.error(t('chat.error.saveFailed') || 'Failed to save', {
+            id: saveToastId,
+          });
+        }
+      } else {
+        // No documentId, just show success
+        toast.success(t('chat.confirm.appliedCount', { count: appliedCount }));
+      }
+    }
   };
 
   const declinePendingEdit = (messageId: string) => {
@@ -644,6 +724,39 @@ export function ChatPanel({
     setStreamingContent('');
     setStreamingToolCalls([]);
   }, []);
+
+  // Refresh session - clear message history but keep disk files
+  const handleRefreshSession = useCallback(async () => {
+    if (!documentId || isRefreshing) return;
+
+    if (!confirm(t('chat.confirm.refreshSession'))) return;
+
+    setIsRefreshing(true);
+    try {
+      const res = await fetch('/api/ai/chat-acontext/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(t('chat.error.refreshFailed') + ': ' + (data.error || 'Unknown error'));
+        return;
+      }
+
+      const data = await res.json();
+      setChatSessionId(data.session.acontextSessionId);
+      setMessages([]);
+      setTokenCount(0);
+      toast.success(t('chat.refreshSuccess'));
+    } catch (error) {
+      console.error('[ChatPanel] Refresh session error:', error);
+      toast.error(t('chat.error.refreshFailed'));
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [documentId, isRefreshing, t]);
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -744,9 +857,31 @@ export function ChatPanel({
       }> = [];
       let finalDoc: string | undefined;
 
+      const streamStartTime = Date.now();
+      let chunkCount = 0;
+      console.log('[ChatPanel] 🚀 Stream started', { timestamp: streamStartTime });
+
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+
+        if (done) {
+          console.log('[ChatPanel] ✅ Stream done', {
+            duration: `${Date.now() - streamStartTime}ms`,
+            totalChunks: chunkCount,
+            finalContentLen: finalContent.length,
+          });
+          break;
+        }
+
+        chunkCount++;
+        const bytesLen = value?.length || 0;
+        if (chunkCount <= 5 || chunkCount % 10 === 0) {
+          console.log('[ChatPanel] 📡 Stream read', {
+            chunk: chunkCount,
+            bytesLen,
+            elapsed: `${Date.now() - streamStartTime}ms`,
+          });
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -833,9 +968,14 @@ export function ChatPanel({
 
             if (data.type === 'content') {
               finalContent += data.content;
-              flushSync(() => {
-                setStreamingContent(finalContent);
+              console.log('[ChatPanel] 📦 Content chunk received', {
+                chunkLen: data.content.length,
+                chunkPreview: data.content.slice(0, 30),
+                totalLen: finalContent.length,
+                timestamp: Date.now(),
               });
+              // Use regular state update - StreamingMarkdown handles smooth rendering
+              setStreamingContent(finalContent);
             }
 
             if (data.type === 'tool_call_delta') {
@@ -973,6 +1113,63 @@ export function ChatPanel({
               selectionMarkdown={getSelectionMarkdown?.()}
             />
           )}
+          {/* Refresh session button */}
+          {useAcontext && documentId && messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title={t('chat.refreshSession')}
+              type="button"
+              onClick={handleRefreshSession}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+            </Button>
+          )}
+          {/* Chat settings (typewriter speed, etc.) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                title={t('settings.title')}
+                type="button"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                {t('chat.title')} · {t('sidebar.settings')}
+              </DropdownMenuLabel>
+              <div className="px-2 py-1.5 space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="shrink-0 w-20">{t('chat.speed.label')}</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="1"
+                    value={typewriterSpeed}
+                    onChange={(e) => setTypewriterSpeed(Number(e.target.value))}
+                    className="flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    title={t('chat.speed.title')}
+                  />
+                  <span className="shrink-0 w-10 text-right font-medium">
+                    {typewriterSpeed === 10
+                      ? '⚡'
+                      : typewriterSpeed <= 3
+                        ? '🐢'
+                        : typewriterSpeed >= 7
+                          ? '🚀'
+                          : typewriterSpeed}
+                  </span>
+                </div>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {onClose && (
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
               <X className="h-4 w-4" />
@@ -1167,12 +1364,18 @@ export function ChatPanel({
               </div>
             </div>
           )}
-          {/* Streaming content / Loading indicator */}
-          {isLoading && (streamingContent || streamingToolCalls.length > 0) && !agentLoopState.isRunning && (
+          {/* Streaming content / Loading indicator - show during agent loop too */}
+          {isLoading && (streamingContent || streamingToolCalls.length > 0) && (
             <div className="flex justify-start">
               <div className="max-w-[85%] rounded-lg px-3 py-2 bg-muted text-sm">
                 {streamingContent && (
-                  <ChatMessageContent content={streamingContent} documentId={documentId} />
+                  <StreamingMarkdown
+                    content={streamingContent}
+                    isStreaming={isLoading}
+                    speed={typewriterSpeed}
+                    documentId={documentId}
+                    className="text-sm"
+                  />
                 )}
                 {streamingToolCalls.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-border/50 space-y-2">
@@ -1184,7 +1387,7 @@ export function ChatPanel({
               </div>
             </div>
           )}
-          {isLoading && !streamingContent && streamingToolCalls.length === 0 && !agentLoopState.isRunning && (
+          {isLoading && !streamingContent && streamingToolCalls.length === 0 && (
             <div className="flex justify-start">
               <div className="rounded-lg px-3 py-2 bg-muted flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1193,9 +1396,14 @@ export function ChatPanel({
             </div>
           )}
         </div>
-        <div className="p-3 border-t flex gap-2">
+        <div className="p-3 border-t space-y-2">
+          <div className="flex gap-2">
           <Input
-            placeholder={t('chat.inputPlaceholderShort')}
+            placeholder={
+              isLoadingHistory ? t('chat.loadingHistory') :
+              isRefreshing ? t('chat.refreshSession') + '...' :
+              t('chat.inputPlaceholderShort')
+            }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -1204,13 +1412,13 @@ export function ChatPanel({
                 sendMessage();
               }
             }}
-            disabled={isLoading}
+            disabled={isLoading || isLoadingHistory || isRefreshing}
             className="flex-1"
           />
           <Button
             size="icon"
             onClick={isLoading ? cancelRequest : sendMessage}
-            disabled={!isLoading && !input.trim()}
+            disabled={isLoading || isLoadingHistory || isRefreshing || !input.trim()}
             variant={isLoading ? 'destructive' : 'default'}
             className="shrink-0"
             title={isLoading ? t('chat.cancel') : t('chat.send')}
@@ -1221,6 +1429,7 @@ export function ChatPanel({
               <Send className="h-4 w-4" />
             )}
           </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
