@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { marked } from 'marked';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -832,7 +833,9 @@ export function ChatPanel({
 
             if (data.type === 'content') {
               finalContent += data.content;
-              setStreamingContent(finalContent);
+              flushSync(() => {
+                setStreamingContent(finalContent);
+              });
             }
 
             if (data.type === 'tool_call_delta') {
