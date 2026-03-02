@@ -304,34 +304,63 @@ export async function POST(request: Request) {
               )
             );
 
-            // Call LLM (non-streaming for loop control)
-            const response = await openaiClient.chat.completions.create({
+            // Call LLM with streaming for typewriter effect
+            const stream = await openaiClient.chat.completions.create({
               model: config.model ?? 'gpt-4o-mini',
               messages,
               temperature: config.temperature ?? 0.7,
               max_tokens: config.maxTokens ?? 2048,
               tools,
               tool_choice: 'auto',
-              stream: false,
+              stream: true,
             });
 
-            const assistantMessage = response.choices[0]?.message;
-            if (!assistantMessage) {
-              console.log(LOG_TAG, 'No response from LLM, stopping loop');
-              break;
+            let content = '';
+            const toolCallsMap = new Map<number, { id: string; name: string; arguments: string }>();
+
+            // Process stream chunk by chunk
+            for await (const chunk of stream) {
+              const delta = chunk.choices[0]?.delta;
+              if (!delta) continue;
+
+              // Stream content immediately
+              if (delta.content) {
+                content += delta.content;
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({ type: 'content', content: delta.content })}\n\n`
+                  )
+                );
+              }
+
+              // Accumulate tool calls
+              if (delta.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  const idx = tc.index;
+                  if (!toolCallsMap.has(idx)) {
+                    toolCallsMap.set(idx, { id: '', name: '', arguments: '' });
+                  }
+                  const existing = toolCallsMap.get(idx)!;
+                  if (tc.id) existing.id = tc.id;
+                  if (tc.function?.name) existing.name = tc.function.name;
+                  if (tc.function?.arguments) existing.arguments += tc.function.arguments;
+                }
+              }
             }
 
-            const content = assistantMessage.content || '';
-            const toolCalls = assistantMessage.tool_calls || [];
+            // Convert tool calls map to array
+            const toolCalls = Array.from(toolCallsMap.values()).map(tc => ({
+              id: tc.id,
+              type: 'function' as const,
+              function: {
+                name: tc.name,
+                arguments: tc.arguments,
+              },
+            }));
 
-            // Send content if any
+            // Update final content
             if (content) {
               finalContent += content;
-              controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({ type: 'content', content })}\n\n`
-                )
-              );
             }
 
             // If no tool calls, we're done
