@@ -680,7 +680,7 @@ export function ChatPanel({
             throw new Error('Failed to save document');
           }
 
-          toast.success(t('chat.confirm.appliedCount', { count: appliedCount }), {
+          toast.success(t('chat.confirm.appliedCount').replace('{count}', String(appliedCount)), {
             id: saveToastId,
           });
         } catch (error) {
@@ -691,7 +691,7 @@ export function ChatPanel({
         }
       } else {
         // No documentId, just show success
-        toast.success(t('chat.confirm.appliedCount', { count: appliedCount }));
+        toast.success(t('chat.confirm.appliedCount').replace('{count}', String(appliedCount)));
       }
     }
   };
