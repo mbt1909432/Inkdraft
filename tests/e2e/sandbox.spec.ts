@@ -12,11 +12,14 @@ test.describe('Sandbox Integration', () => {
   });
 
   test('should show chat panel with AI assistant', async ({ page }) => {
-    // Create a new document
-    await page.click('text=新建文档');
-    await page.waitForTimeout(500);
+    // Create a new document - click the create button to open dropdown
+    const createButton = page.locator('button').filter({ hasText: /创建|Create/ }).first();
+    await createButton.click();
+    await page.waitForTimeout(300);
+
+    // Click "空白文档" option in dropdown
     await page.click('text=空白文档');
-    await page.waitForURL(/\/document\//);
+    await page.waitForURL(/\/document\//, { timeout: 15000 });
     await page.waitForSelector('.markdown-editor-wrapper', { timeout: 15000 });
 
     // Look for chat toggle button

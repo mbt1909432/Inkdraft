@@ -491,9 +491,7 @@ export async function POST(request: Request) {
               model: config.model ?? 'gpt-4o-mini',
               messages,
               temperature: config.temperature ?? 0.7,
-              // IMPORTANT: Do NOT pass max_tokens in streaming mode with tools
-              // This causes a bug with some API providers where max_output_tokens becomes 0
-              // max_tokens: config.maxTokens ?? 2048,
+              max_tokens: config.maxTokens ?? 2048,
               tools,
               tool_choice: 'auto',
               stream: true,

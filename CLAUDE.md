@@ -193,40 +193,31 @@ When users upload files (PDF, images) in chat:
 - Text-based PDFs: content extracted and included in message
 - Image-based PDFs: pages converted to images for vision analysis
 
-### OpenAI SDK Streaming + Tools Bug
+### API 供应商兼容性问题
 
-**IMPORTANT**: When using OpenAI SDK with `stream: true` AND `tools` together, **DO NOT pass `max_tokens` parameter**.
-
-```typescript
-// ❌ WRONG - will cause "max_output_tokens: 0" error with some API providers
-const stream = await client.chat.completions.create({
-  model,
-  messages,
-  max_tokens: 30000,  // This causes the bug!
-  tools,
-  stream: true,
-});
-
-// ✅ CORRECT - omit max_tokens when streaming with tools
-const stream = await client.chat.completions.create({
-  model,
-  messages,
-  // max_tokens removed
-  tools,
-  stream: true,
-});
-```
-
-**Root cause**: OpenAI SDK (v5/v6) has a compatibility issue with some API providers (like openai-next.com). When `stream: true` + `tools` + `max_tokens` are all present, the SDK or provider internally sets `max_output_tokens` to 0, causing the error:
+**问题：** `gpt-5.1` 模型在 **streaming + tools + max_tokens** 组合下会报错：
 
 ```
 400 Invalid 'max_output_tokens': integer below minimum value. Expected a value >= 16, but got 0 instead.
 ```
 
-**Affected file**: `app/api/ai/chat-acontext/route.ts`
+**原因：** 这是 **API 供应商 (openai-next.com) 针对 gpt-5.1 模型的特定 bug**，不是代码问题。
 
-**Test scripts for debugging**:
-- `test-llm.mjs` - Basic LLM connectivity test (non-streaming)
-- `test-stream.mjs` - Streaming test without tools
-- `test-stream-tools.mjs` - Streaming test with tools (reproduces the bug)
-- `test-sdk-methods.mjs` - Tests different SDK methods
+**测试结果：**
+
+| Model | Streaming + Tools + max_tokens |
+|-------|-------------------------------|
+| gpt-5 | ✅ OK |
+| gpt-5.1 | ❌ FAIL |
+| gpt-4o | ✅ OK |
+| gpt-4o-mini | ✅ OK |
+
+**解决方案：** 使用 `gpt-5` 而不是 `gpt-5.1`
+
+```bash
+# .env.local
+OPENAI_LLM_MODEL=gpt-5
+```
+
+**测试脚本：**
+- `test-model-stream.mjs` - 测试不同模型在 streaming + tools 模式下的表现

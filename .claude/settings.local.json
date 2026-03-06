@@ -19,7 +19,26 @@
       "Bash(npx shadcn@latest add:*)",
       "Bash(npx skills find:*)",
       "Bash(git checkout:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git stash pop:*)",
+      "Bash(git stash:*)",
+      "Bash(git reset:*)",
+      "Bash(curl:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(BASE_URL=http://localhost:3001 npx playwright test:*)",
+      "Bash(node:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run screenshot:*)",
+      "Bash(ls:*)",
+      "Bash(English\"\n- Remove Chinese description from doc link\n- Display screenshots individually instead of table \\(larger\\)\n- Fix mixed Chinese text \"面向\" to \"serves\"\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git restore:*)",
+      "Bash(npm run:*)",
+      "Bash(npm:*)",
+      "Bash(ACONTEXT_API_KEY='sk-ac-KFW5pPUFK6eImNsLULn8bwlBtgqMWaY_FPIq0z85YCg' node:*)",
+      "Bash(mv:*)",
+      "Bash(dir C:\\\\markdown_editor\\\\node_modules\\\\pdfjs-dist\\\\build:*)",
+      "Bash(rm:*)",
+      "Bash(sed:*)"
     ]
   }
 }

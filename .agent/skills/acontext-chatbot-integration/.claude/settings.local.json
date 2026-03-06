@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(done)",
+      "Bash(python3 -c:*)",
+      "Bash(powershell -Command \"Get-ChildItem -Recurse -Include *.md,*.ts | ForEach-Object { $content = Get-Content $_FullName -Raw; if \\($content -match ''[\\\\u4e00-\\\\u9fff]''\\) { Write-Host $_FullName } }\")",
+      "Bash(node:*)"
+    ]
+  }
+}

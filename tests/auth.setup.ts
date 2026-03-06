@@ -1,33 +1,20 @@
 import { test as setup, expect } from '@playwright/test';
+import { LoginPage } from './pages/LoginPage';
+import { getTestUser, createTestDocument, deleteTestDocument } from './fixtures/test-fixtures';
 
 const authFile = 'playwright/.auth/user.json';
 
 setup('authenticate', async ({ page }) => {
-  const email = process.env.TEST_USER_EMAIL;
-  const password = process.env.TEST_USER_PASSWORD;
-
-  if (!email || !password) {
-    throw new Error('TEST_USER_EMAIL and TEST_USER_PASSWORD environment variables are required');
-  }
+  const { email, password } = getTestUser();
 
   console.log('[auth.setup] Logging in as', email);
 
-  // Go to login page
-  await page.goto('/login');
-  await page.waitForLoadState('networkidle');
+  // Use LoginPage page object
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
 
-  // Fill credentials
-  await page.fill('#email', email);
-  await page.fill('#password', password);
-
-  // Submit
-  await page.click('button[type="submit"]');
-
-  // Wait for redirect to documents page
-  await page.waitForURL('**/documents', { timeout: 15000 });
-
-  // Verify logged in
-  await expect(page).toHaveURL(/documents/);
+  // Login and wait for redirect
+  await loginPage.loginAndWaitForRedirect(email, password, { timeout: 15000 });
 
   console.log('[auth.setup] Login successful, saving auth state');
 
@@ -41,30 +28,28 @@ setup('authenticate', async ({ page }) => {
 setup('create test document', async ({ request }) => {
   console.log('[auth.setup] Creating test document...');
 
-  // Use the saved auth state
-  const response = await request.post('/api/documents', {
-    data: {
+  try {
+    const document = await createTestDocument(request, {
       title: 'E2E Test Document',
-      content: '# Test Document\n\nThis is a test document for E2E testing.\n\n## Features to test\n\n- Image upload\n- Export to Word\n- Export to PDF\n',
-    },
-  });
+      content: `# Test Document
 
-  if (response.ok()) {
-    const data = await response.json();
-    console.log('[auth.setup] Test document created:', data.document?.id);
+This is a test document for E2E testing.
+
+## Features to test
+
+- Image upload
+- Export to Word
+- Export to PDF
+`,
+    });
+
+    console.log('[auth.setup] Test document created:', document.id);
 
     // Save document ID for other tests
-    process.env.TEST_DOCUMENT_ID = data.document?.id;
-  } else {
-    console.log('[auth.setup] Failed to create test document:', response.status());
-    // Try to get existing documents
-    const docsResponse = await request.get('/api/documents');
-    if (docsResponse.ok()) {
-      const docsData = await docsResponse.json();
-      if (docsData.documents?.length > 0) {
-        process.env.TEST_DOCUMENT_ID = docsData.documents[0].id;
-        console.log('[auth.setup] Using existing document:', process.env.TEST_DOCUMENT_ID);
-      }
-    }
+    process.env.TEST_DOCUMENT_ID = document.id;
+  } catch (error) {
+    // If document creation fails, tests will use existing documents
+    console.log('[auth.setup] Failed to create test document, tests will use existing documents');
+    console.log('[auth.setup] Error:', error);
   }
 });
