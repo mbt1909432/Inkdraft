@@ -126,6 +126,31 @@ export function getChatEditToolSchema(): OpenAI.Chat.Completions.ChatCompletionT
   return [SEARCH_REPLACE_SCHEMA, INSERT_AFTER_SCHEMA];
 }
 
+// --- Web search tool ---
+
+const WEB_SEARCH_SCHEMA: OpenAI.Chat.Completions.ChatCompletionTool = {
+  type: 'function',
+  function: {
+    name: 'web_search',
+    description:
+      'Search the internet for up-to-date information. Use when the user asks about current events, news, latest data, or information you are uncertain about. Returns search results with titles, URLs, and snippets.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'The search query. Use concise, specific keywords.',
+        },
+      },
+      required: ['query'],
+    },
+  },
+};
+
+export function getWebSearchToolSchema(): OpenAI.Chat.Completions.ChatCompletionTool[] {
+  return [WEB_SEARCH_SCHEMA];
+}
+
 const CHAT_EDIT_TOOL_NAMES = new Set(['search_replace', 'insert_after']);
 
 export type OneRoundResult = {

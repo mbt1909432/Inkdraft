@@ -15,6 +15,16 @@ export function getLLMConfig(): LLMConfig {
     throw new Error('OPENAI_LLM_API_KEY is not set');
   }
 
+  // Parse maxTokens with validation (minimum 16)
+  const maxTokensEnv = process.env.OPENAI_LLM_MAX_TOKENS;
+  let maxTokens = 2048;
+  if (maxTokensEnv) {
+    const parsed = parseInt(maxTokensEnv, 10);
+    if (!isNaN(parsed) && parsed >= 16) {
+      maxTokens = parsed;
+    }
+  }
+
   return {
     endpoint,
     apiKey,
@@ -22,8 +32,6 @@ export function getLLMConfig(): LLMConfig {
     temperature: process.env.OPENAI_LLM_TEMPERATURE
       ? parseFloat(process.env.OPENAI_LLM_TEMPERATURE)
       : 0.7,
-    maxTokens: process.env.OPENAI_LLM_MAX_TOKENS
-      ? parseInt(process.env.OPENAI_LLM_MAX_TOKENS, 10)
-      : 2048,
+    maxTokens,
   };
 }
