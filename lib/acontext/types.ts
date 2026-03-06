@@ -18,10 +18,22 @@ export interface ChatSession {
   updatedAt: Date;
 }
 
+/**
+ * Content part for multimodal messages
+ */
+export interface ContentPart {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: {
+    url: string;
+    detail?: 'auto' | 'low' | 'high';
+  };
+}
+
 export interface AcontextMessage {
   id?: string;
   role: 'user' | 'assistant' | 'system' | 'tool';
-  content: string;
+  content: string | ContentPart[];
   tool_calls?: ToolCall[];
   tool_call_id?: string;
   created_at?: string | Date;
