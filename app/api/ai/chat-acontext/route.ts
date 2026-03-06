@@ -2,6 +2,9 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getLLMConfig } from '@/lib/llm/config';
+
+// Debug: Print OpenAI SDK version
+console.log('[DEBUG] OpenAI SDK version:', (OpenAI as any).VERSION || 'unknown');
 import { getChatEditToolSchema } from '@/lib/llm/openai-client';
 import {
   getAcontextConfig,
@@ -479,13 +482,18 @@ export async function POST(request: Request) {
                 ? JSON.stringify(messages[messages.length - 1].content).substring(0, 500)
                 : 'empty',
               documentMarkdownLength: documentMarkdown?.length || 0,
+              // Debug max_tokens
+              configMaxTokens: config.maxTokens,
+              effectiveMaxTokens: config.maxTokens ?? 2048,
             });
 
             const stream = await openaiClient.chat.completions.create({
               model: config.model ?? 'gpt-4o-mini',
               messages,
               temperature: config.temperature ?? 0.7,
-              max_tokens: config.maxTokens ?? 2048,
+              // IMPORTANT: Do NOT pass max_tokens in streaming mode with tools
+              // This causes a bug with some API providers where max_output_tokens becomes 0
+              // max_tokens: config.maxTokens ?? 2048,
               tools,
               tool_choice: 'auto',
               stream: true,
