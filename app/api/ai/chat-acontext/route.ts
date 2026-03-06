@@ -9,7 +9,9 @@ import {
   storeMessage,
   getMessages,
   getTokenCounts,
+  uploadImage,
 } from '@/lib/acontext';
+import type { ContentPart } from '@/lib/acontext/types';
 import { getOrCreateChatSession } from '@/lib/acontext/session-store';
 import { applyEditTool } from '@/lib/editor/apply-edit-tools';
 import {
@@ -19,6 +21,7 @@ import {
   formatSandboxContext,
   createSandbox,
 } from '@/lib/acontext/sandbox-tools';
+import { getWebSearchToolSchema } from '@/lib/llm/openai-client';
 
 const LOG_TAG = '[api/ai/chat-acontext]';
 
@@ -52,11 +55,21 @@ NEVER use heredoc (<< 'EOF') - it will HANG!
 
 `;
 
-const CHAT_EDIT_SYSTEM_PROMPT = CRITICAL_RULES + `You are an AI document editor with Python code execution capabilities. Your job is to DIRECTLY EDIT the user's Markdown document based on their requests. Do NOT just give advice or explain what to do - actually use the edit tools to make changes.
+const CHAT_EDIT_SYSTEM_PROMPT = CRITICAL_RULES + `你的名字是墨元(Moyuan)，你是一个AI文档编辑助手。
+
+You are an AI document editor with Python code execution capabilities. Your job is to DIRECTLY EDIT the user's Markdown document based on their requests. Do NOT just give advice or explain what to do - actually use the edit tools to make changes.
 
 **Core Principle**: When users describe what they want (e.g., "help me write a CV for HKU application", "translate this to English", "add a section about my research"), you should IMMEDIATELY use tools to edit the document. Be proactive, not reactive.
 
+**IMPORTANT - READ THE DOCUMENT FIRST**: Before responding, ALWAYS check the "Current document (Markdown)" section below. The document content is provided to you - you don't need to ask for it or search for files. When user asks about "the document" or refers to content by name (like "Day 01"), they mean the content in the "Current document" section.
+
 **Document context**: You will receive the current document content (and optionally the user's selected text). Use it to understand what to change.
+
+**IMPORTANT - User uploaded files**:
+- Users may upload files (PDF, images, etc.). These will be labeled as "[用户上传的文件: filename]" in their message.
+- **The uploaded file content is NOT the current document!** It is reference material the user wants to discuss or incorporate.
+- When user says "write this to document" or "add to document", they mean add the uploaded content TO the current (possibly empty) document.
+- **NEVER search for after_string or old_string in the uploaded file content!** Only search in the "Current document" section below.
 
 **Edit tools**:
 1. **search_replace**: Replace one segment with another. Use when the user wants to change or delete existing content.
@@ -84,11 +97,19 @@ const CHAT_EDIT_SYSTEM_PROMPT = CRITICAL_RULES + `You are an AI document editor 
    - Returns: disk:: path that you MUST use in markdown (e.g., "![chart](disk::artifacts/chart.png)")
    - IMPORTANT: Always use the "disk::" path format in your markdown, NOT any https:// URL!
 
+**Web search tool** (for getting up-to-date information):
+6. **web_search**: Search the internet for current information.
+   - query: The search query (use concise, specific keywords)
+   - Returns: Search results with titles, URLs, and snippets
+   - Use when user asks about: current events, news, latest data, recent developments, or information you're uncertain about
+   - After searching, cite your sources in the response using [1], [2] format and list the sources at the end
+
 **When to use tools**:
 - User asks to modify, add, remove, or restructure content → USE EDIT TOOLS
 - User provides personal info to fill in → USE EDIT TOOLS to replace placeholders
 - User wants translation, formatting changes, or improvements → USE EDIT TOOLS
 - User wants to run Python code or generate charts → USE SANDBOX TOOLS (create file first!)
+- User asks about current events, news, or latest information → USE WEB SEARCH, then cite sources [1][2]
 - User asks a question about the document → Reply with text (no tools needed)
 - User explicitly says "don't edit" or "just tell me" → Reply with text only
 
@@ -111,8 +132,8 @@ Before calling bash_execution_sandbox with any Python command:
 function buildSystemContent(documentMarkdown: string, selectionMarkdown?: string | null): string {
   const documentBlock =
     documentMarkdown.trim().length > 0
-      ? `\n\n**Current document (Markdown):**\n\`\`\`\n${documentMarkdown}\n\`\`\``
-      : '\n\n**Current document is empty.**';
+      ? `\n\n---\n\n## 📄 CURRENT DOCUMENT CONTENT (Markdown)\n\nThe user's document is below. When they ask about "the document" or refer to content by name, this is what they mean:\n\n\`\`\`markdown\n${documentMarkdown}\n\`\`\`\n\n---`
+      : '\n\n---\n\n## 📄 CURRENT DOCUMENT IS EMPTY\n\nTo add content to an empty document, use insert_after with after_string="" (empty string) to insert at the beginning.\n\n---';
   const selectionBlock =
     selectionMarkdown?.trim()
       ? `\n\n**User has selected this part of the document:**\n\`\`\`\n${selectionMarkdown}\n\`\`\``
@@ -122,6 +143,8 @@ function buildSystemContent(documentMarkdown: string, selectionMarkdown?: string
 
 interface Body {
   content: string;
+  /** Multimodal content parts (images + text) */
+  contentParts?: ContentPart[];
   documentId?: string;
   documentMarkdown: string;
   selectionMarkdown?: string | null;
@@ -164,8 +187,8 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json().catch(() => ({}))) as Body;
-    if (!body.content?.trim()) {
-      return NextResponse.json({ error: 'content is required' }, { status: 400 });
+    if (!body.content?.trim() && !body.contentParts?.length) {
+      return NextResponse.json({ error: 'content or contentParts is required' }, { status: 400 });
     }
 
     const documentMarkdown = typeof body.documentMarkdown === 'string' ? body.documentMarkdown : '';
@@ -176,6 +199,7 @@ export async function POST(request: Request) {
       userId: user.id.slice(0, 8),
       documentId,
       contentLen: body.content.length,
+      hasContentParts: !!body.contentParts?.length,
       docLen: documentMarkdown.length,
     });
 
@@ -200,13 +224,65 @@ export async function POST(request: Request) {
       acontextDiskId: chatSession.acontextDiskId,
     });
 
-    // Store user message
+    // Process multimodal content - prepare images for Vision API
+    // Note: We pass base64 data URLs directly to the LLM (Vision API supports this)
+    // Upload to Acontext disk is done asynchronously for storage
+    let messageContent: string | ContentPart[] = body.content;
+
+    if (body.contentParts && body.contentParts.length > 0) {
+      const processedParts: ContentPart[] = [];
+
+      for (const part of body.contentParts) {
+        if (part.type === 'text') {
+          processedParts.push(part);
+        } else if (part.type === 'image_url' && part.image_url?.url) {
+          const imageUrl = part.image_url.url;
+
+          // For Vision API, we can use base64 data URLs directly
+          // This avoids the need to upload to Acontext first
+          if (imageUrl.startsWith('data:')) {
+            // Use the base64 data URL directly for Vision API
+            processedParts.push({
+              type: 'image_url',
+              image_url: {
+                url: imageUrl,
+                detail: part.image_url.detail || 'auto',
+              },
+            });
+
+            // Try to upload to Acontext disk for storage (async, don't wait)
+            uploadImage(acontextClient, chatSession.acontextDiskId, {
+              filename: `chat-${Date.now()}-${Math.random().toString(36).slice(2)}.png`,
+              content: Buffer.from(imageUrl.split(',')[1], 'base64'),
+              mimeType: 'image/png',
+              path: '/chat-images/',
+            }).then(result => {
+              console.log(LOG_TAG, 'Image uploaded to disk', { publicUrl: result.publicUrl });
+            }).catch(uploadErr => {
+              console.error(LOG_TAG, 'Failed to upload image to disk (non-critical)', uploadErr.message || uploadErr);
+            });
+          } else {
+            // Already a URL, use as-is
+            processedParts.push(part);
+          }
+        }
+      }
+
+      messageContent = processedParts;
+    }
+
+    // Store user message (with multimodal support)
     try {
       await storeMessage(acontextClient, chatSession.acontextSessionId, {
         role: 'user',
-        content: body.content,
+        content: messageContent,
       });
-      console.log(LOG_TAG, 'User message stored');
+      console.log(LOG_TAG, 'User message stored', {
+        isMultimodal: Array.isArray(messageContent),
+        contentPreview: Array.isArray(messageContent)
+          ? JSON.stringify(messageContent).substring(0, 200)
+          : (messageContent as string).substring(0, 100)
+      });
     } catch (err) {
       console.error(LOG_TAG, 'Failed to store user message', err);
       throw err;
@@ -215,7 +291,7 @@ export async function POST(request: Request) {
     // Load message history from Acontext
     let history: Array<{
       role: string;
-      content: string;
+      content: string | ContentPart[];
       tool_calls?: Array<{
         id: string;
         type: string;
@@ -225,42 +301,126 @@ export async function POST(request: Request) {
     }> = [];
     try {
       history = await getMessages(acontextClient, chatSession.acontextSessionId, { limit: 50 });
-      console.log(LOG_TAG, 'History loaded', { count: history.length });
+      console.log(LOG_TAG, 'History loaded', {
+        count: history.length,
+        firstMsgIsMultimodal: history.length > 0 && Array.isArray(history[0].content),
+        firstMsgContentPreview: history.length > 0
+          ? (Array.isArray(history[0].content)
+              ? JSON.stringify(history[0].content).substring(0, 200)
+              : String(history[0].content).substring(0, 100))
+          : 'no history'
+      });
     } catch (err) {
       console.error(LOG_TAG, 'Failed to load history', err);
     }
 
     // Build initial messages for OpenAI
     const systemContent = buildSystemContent(documentMarkdown, selectionMarkdown);
-    const historyMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = history.map((m) => {
+
+    // Build history messages from Acontext (text-only, multimodal may be corrupted)
+    const historyMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = history.map((m, idx) => {
       if (m.role === 'tool') {
         return {
           role: 'tool' as const,
           tool_call_id: m.tool_call_id || '',
-          content: m.content || '',
+          content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
         };
       }
       if (m.role === 'assistant' && m.tool_calls) {
         return {
           role: 'assistant' as const,
-          content: m.content || '',
+          content: typeof m.content === 'string' ? m.content : '',
           tool_calls: m.tool_calls as OpenAI.Chat.Completions.ChatCompletionMessageToolCall[],
+        };
+      }
+      // Handle multimodal user messages
+      if (m.role === 'user' && Array.isArray(m.content)) {
+        const multimodalContent = m.content.map(part => {
+          if (part.type === 'text') {
+            return { type: 'text' as const, text: part.text || '' };
+          } else if (part.type === 'image_url') {
+            console.log(LOG_TAG, `History message ${idx} has image_url`, {
+              urlLength: part.image_url?.url?.length || 0,
+              urlPrefix: part.image_url?.url?.substring(0, 50) || 'empty',
+            });
+            return {
+              type: 'image_url' as const,
+              image_url: {
+                url: part.image_url?.url || '',
+                detail: part.image_url?.detail || 'auto' as const,
+              },
+            };
+          }
+          return { type: 'text' as const, text: '' };
+        });
+        console.log(LOG_TAG, `History message ${idx} is multimodal`, {
+          partsCount: multimodalContent.length,
+          hasImage: multimodalContent.some(p => p.type === 'image_url'),
+        });
+        return {
+          role: 'user' as const,
+          content: multimodalContent,
         };
       }
       return {
         role: m.role as 'user' | 'assistant' | 'system',
-        content: m.content || '',
+        content: typeof m.content === 'string' ? m.content : '',
       };
     });
 
+    // Build messages array
+    // NOTE: Acontext may corrupt multimodal content when loading history,
+    // so we add the current multimodal message directly instead of relying on history
     let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemContent },
       ...historyMessages,
     ];
 
+    // If current message is multimodal, replace/append it directly
+    // (Acontext history loading may have corrupted the multimodal content)
+    if (Array.isArray(messageContent) && messageContent.some(p => p.type === 'image_url')) {
+      // Find if there's a user message at the end that should be multimodal
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg?.role === 'user') {
+        // Replace the last user message with the actual multimodal content
+        messages[messages.length - 1] = {
+          role: 'user' as const,
+          content: messageContent.map(part => {
+            if (part.type === 'text') {
+              return { type: 'text' as const, text: part.text || '' };
+            } else if (part.type === 'image_url') {
+              return {
+                type: 'image_url' as const,
+                image_url: {
+                  url: part.image_url?.url || '',
+                  detail: part.image_url?.detail || 'auto' as const,
+                },
+              };
+            }
+            return { type: 'text' as const, text: '' };
+          }),
+        };
+        console.log(LOG_TAG, 'Replaced last user message with multimodal content', {
+          partsCount: messageContent.length,
+          hasImage: messageContent.some(p => p.type === 'image_url'),
+        });
+      }
+    }
+
+    // Debug: Log final messages structure
+    console.log(LOG_TAG, 'Final messages for LLM', {
+      totalMessages: messages.length,
+      lastUserMessageIsMultimodal: messages.length > 1 && messages[messages.length - 1].role === 'user'
+        && Array.isArray(messages[messages.length - 1].content),
+      lastUserMessagePreview: messages.length > 0
+        ? JSON.stringify(messages[messages.length - 1].content).substring(0, 300)
+        : 'no messages'
+    });
+
     const editTools = getChatEditToolSchema();
     const sandboxTools = getSandboxToolSchemas();
-    const tools = [...editTools, ...sandboxTools] as OpenAI.Chat.Completions.ChatCompletionTool[];
+    const webSearchTools = getWebSearchToolSchema();
+    const tools = [...editTools, ...sandboxTools, ...webSearchTools] as OpenAI.Chat.Completions.ChatCompletionTool[];
 
     // Create SSE encoder
     const encoder = new TextEncoder();
@@ -307,6 +467,20 @@ export async function POST(request: Request) {
             );
 
             // Call LLM with streaming for typewriter effect
+            // Debug: Log the messages being sent to OpenAI
+            const systemContent = messages[0]?.content;
+            console.log(LOG_TAG, 'Sending to OpenAI', {
+              messageCount: messages.length,
+              systemMessageLength: typeof systemContent === 'string' ? systemContent.length : 0,
+              systemMessagePreview: typeof systemContent === 'string' ? systemContent.substring(0, 500) : 'non-string content',
+              lastUserMessageRole: messages[messages.length - 1]?.role,
+              lastUserMessageIsArray: Array.isArray(messages[messages.length - 1]?.content),
+              lastUserMessageContent: messages[messages.length - 1]?.content
+                ? JSON.stringify(messages[messages.length - 1].content).substring(0, 500)
+                : 'empty',
+              documentMarkdownLength: documentMarkdown?.length || 0,
+            });
+
             const stream = await openaiClient.chat.completions.create({
               model: config.model ?? 'gpt-4o-mini',
               messages,
@@ -411,7 +585,8 @@ export async function POST(request: Request) {
               }
 
               const isSandbox = isSandboxToolName(toolName);
-              console.log(LOG_TAG, 'Tool routing', { name: toolName, isSandbox });
+              const isWebSearch = toolName === 'web_search';
+              console.log(LOG_TAG, 'Tool routing', { name: toolName, isSandbox, isWebSearch });
 
               // Send tool call event
               controller.enqueue(
@@ -488,6 +663,65 @@ export async function POST(request: Request) {
                   });
                   sandboxFailed = true;
                 }
+              } else if (isWebSearch) {
+                // Web search tool
+                try {
+                  const searchQuery = args.query as string;
+                  if (!searchQuery) {
+                    processedToolCalls.push({
+                      name: toolName,
+                      arguments: args,
+                      applied: false,
+                      error: 'Missing query parameter',
+                    });
+                    continue;
+                  }
+
+                  console.log(LOG_TAG, 'Executing web search', { query: searchQuery });
+
+                  // Call DuckDuckGo API
+                  const searchRes = await fetch(
+                    `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/web-search?q=${encodeURIComponent(searchQuery)}`
+                  );
+
+                  if (!searchRes.ok) {
+                    throw new Error(`Search API error: ${searchRes.status}`);
+                  }
+
+                  const searchData = await searchRes.json();
+                  console.log(LOG_TAG, 'Web search result', {
+                    query: searchQuery,
+                    resultsCount: searchData.results?.length || 0,
+                  });
+
+                  processedToolCalls.push({
+                    name: toolName,
+                    arguments: args,
+                    applied: true,
+                    result: searchData,
+                  });
+
+                  // Send search results to frontend
+                  controller.enqueue(
+                    encoder.encode(
+                      `data: ${JSON.stringify({
+                        type: 'web_search_result',
+                        query: searchQuery,
+                        results: searchData.results || [],
+                        rawAbstract: searchData.rawAbstract,
+                      })}\n\n`
+                    )
+                  );
+                } catch (err) {
+                  const errorMsg = err instanceof Error ? err.message : String(err);
+                  console.error(LOG_TAG, 'Web search error', errorMsg);
+                  processedToolCalls.push({
+                    name: toolName,
+                    arguments: args,
+                    applied: false,
+                    error: errorMsg,
+                  });
+                }
               } else {
                 // Edit tool
                 if (sandboxFailed) {
@@ -556,16 +790,30 @@ export async function POST(request: Request) {
             for (let i = 0; i < toolCalls.length; i++) {
               const tc = toolCalls[i];
               const result = processedToolCalls[i];
+              const toolName = 'function' in tc ? tc.function.name : '';
 
-              const toolResponseContent = ('function' in tc && isSandboxToolName(tc.function.name))
-                ? JSON.stringify({
-                    applied: result.applied,
-                    result: result.result,
-                    error: result.error,
-                  })
-                : (result.applied
+              let toolResponseContent: string;
+              if (toolName === 'web_search') {
+                // Web search results - pass back to LLM for generating response
+                toolResponseContent = JSON.stringify({
+                  applied: result.applied,
+                  query: result.arguments?.query,
+                  results: result.result?.results || [],
+                  rawAbstract: result.result?.rawAbstract || '',
+                  error: result.error,
+                });
+              } else if (isSandboxToolName(toolName)) {
+                toolResponseContent = JSON.stringify({
+                  applied: result.applied,
+                  result: result.result,
+                  error: result.error,
+                });
+              } else {
+                // Edit tools
+                toolResponseContent = result.applied
                   ? JSON.stringify({ applied: true, name: result.name, arguments: result.arguments })
-                  : JSON.stringify({ applied: false, error: result.error || 'Edit not applied' }));
+                  : JSON.stringify({ applied: false, error: result.error || 'Edit not applied' });
+              }
 
               const toolResponse = {
                 role: 'tool' as const,
