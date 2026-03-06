@@ -21,6 +21,7 @@ import {
   Loader2,
   FileStack,
   Upload,
+  FileUp,
   Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ interface SidebarProps {
   onCreateDocument?: (folderId?: string | null, options?: { title?: string; content?: string }) => Promise<void>;
   onCreateFolder?: (parentId?: string | null) => Promise<void>;
   onImportMarkdown?: (folderId?: string | null) => void;
+  onImportPDF?: (folderId?: string | null) => void;
   onDeleteDocument?: (id: string) => Promise<void>;
   onBatchDelete?: (ids: string[]) => Promise<void>;
   onDeleteFolder?: (id: string) => Promise<void>;
@@ -53,6 +55,7 @@ export const Sidebar = memo(function Sidebar({
   onCreateDocument,
   onCreateFolder,
   onImportMarkdown,
+  onImportPDF,
   onDeleteDocument,
   onBatchDelete,
   onDeleteFolder,
@@ -148,7 +151,7 @@ export const Sidebar = memo(function Sidebar({
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between py-2 px-4 border-b border-border">
           <h2 className="font-semibold text-lg">{t('editor.docList')}</h2>
           <Button variant="ghost" size="sm" onClick={toggleSidebar}>
             <ChevronLeft className="h-4 w-4" />
@@ -204,6 +207,10 @@ export const Sidebar = memo(function Sidebar({
               <DropdownMenuItem onClick={() => onImportMarkdown?.(activeFolderId)}>
                 <Upload className="h-4 w-4 mr-2" />
                 {t('documents.importMarkdown')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onImportPDF?.(activeFolderId)}>
+                <FileUp className="h-4 w-4 mr-2" />
+                {t('documents.importPDF')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

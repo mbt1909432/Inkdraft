@@ -65,12 +65,12 @@ export function MarkdownEditor({ className, readOnly = false }: MarkdownEditorPr
     [updateCurrentContent, updateOutline]
   );
 
-  // Initialize outline on mount
+  // Initialize/update outline when document or content changes
   useEffect(() => {
     if (currentDocument?.content) {
       updateOutline(currentDocument.content);
     }
-  }, [currentDocument?.id, updateOutline]);
+  }, [currentDocument?.id, currentDocument?.content, updateOutline]);
 
   if (!currentDocument) {
     return <NoDocumentSelected className={className} />;

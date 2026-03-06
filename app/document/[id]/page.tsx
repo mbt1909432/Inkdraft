@@ -493,26 +493,28 @@ export default function DocumentPage() {
         </>
       )}
 
-      {/* Desktop AI Chat Panel */}
-      {!isMobile && chatOpen && (
-        <>
-          <ResizeHandle onResize={resizeChatPanelBy} direction="right" />
-          <div
-            style={{ width: chatPanelWidth }}
-            className="shrink-0 flex flex-col border-l border-border bg-background z-10"
-          >
-            <ChatPanel
-              getMarkdown={() => currentDocument?.content ?? ''}
-              setMarkdown={updateCurrentContent}
-              documentId={documentId}
-              useAcontext={true}
-              saveDocument={save}
-              onClose={() => setChatOpen(false)}
-              className="h-full min-h-0"
-            />
-          </div>
-        </>
-      )}
+      {/* Desktop AI Chat Panel - Always render, hide on mobile to preserve state */}
+      <div className={cn(isMobile && 'hidden')}>
+        {chatOpen && (
+          <>
+            <ResizeHandle onResize={resizeChatPanelBy} direction="right" />
+            <div
+              style={{ width: chatPanelWidth }}
+              className="h-screen flex flex-col border-l border-border bg-background z-10"
+            >
+              <ChatPanel
+                getMarkdown={() => currentDocument?.content ?? ''}
+                setMarkdown={updateCurrentContent}
+                documentId={documentId}
+                useAcontext={true}
+                saveDocument={save}
+                onClose={() => setChatOpen(false)}
+                className="h-full min-h-0"
+              />
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Mobile AI Chat (Dialog) */}
       {isMobile && (

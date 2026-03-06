@@ -28,8 +28,9 @@ export function useMediaQuery(query: string): boolean {
 
 /**
  * Predefined breakpoint hooks based on Tailwind defaults
+ * Note: useIsMobile uses sm breakpoint (640px) to allow sidebar on tablets
  */
-export const useIsMobile = () => useMediaQuery('(max-width: 767px)');
-export const useIsTablet = () => useMediaQuery('(min-width: 768px) and (max-width: 1023px)');
+export const useIsMobile = () => useMediaQuery('(max-width: 639px)');
+export const useIsTablet = () => useMediaQuery('(min-width: 640px) and (max-width: 1023px)');
 export const useIsDesktop = () => useMediaQuery('(min-width: 1024px)');
 export const useIsSmallMobile = () => useMediaQuery('(max-width: 374px)');

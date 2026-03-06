@@ -54,6 +54,7 @@
     "blankDocument": "Blank document",
     "fromTemplate": "From template",
     "importMarkdown": "Import Markdown",
+    "importPDF": "Create from PDF",
     "importing": "Importing...",
     "importSuccess": "Document imported successfully",
     "importFailed": "Import failed"
@@ -192,7 +193,7 @@
     "loadingHistory": "Loading history...",
     "messageCount": "messages",
     "inputPlaceholder": "Enter instructions to edit the document, e.g.: \"Make the second paragraph more formal\", \"Add a note under 2.1: Manage time wisely\"",
-    "inputPlaceholderShort": "Enter instructions…",
+    "inputPlaceholderShort": "Enter instructions… (@quiz, @translate)",
     "send": "Send",
     "cancel": "Cancel",
     "collapsed": "Collapse",
@@ -259,6 +260,59 @@
       "toolOnly": "(Tool calls only, no additional explanation)"
     },
     "refreshSession": "Refresh session",
-    "refreshSuccess": "Session refreshed"
+    "refreshSuccess": "Session refreshed",
+    "image": {
+      "upload": "Upload image",
+      "invalidType": "Invalid image type. Use PNG, JPG, GIF, or WebP.",
+      "tooLarge": "Image too large. Max 10MB."
+    },
+    "pdf": {
+      "upload": "Upload PDF",
+      "invalidType": "Invalid file type. Please use PDF.",
+      "tooLarge": "PDF too large. Max 50MB.",
+      "parseError": "Failed to parse PDF",
+      "parsing": "Parsing...",
+      "pages": "pages",
+      "textExtracted": "Text extracted",
+      "convertedToImages": "Converted to images",
+      "characters": "characters",
+      "images": "images"
+    }
+  },
+  "quiz": {
+    "title": "Quiz",
+    "start": "Start Quiz",
+    "generating": "Generating quiz...",
+    "question": "Question",
+    "of": "of",
+    "next": "Next",
+    "prev": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "progress": "Progress",
+    "answered": "answered",
+    "completed": "Quiz Completed!",
+    "score": "Score",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "aiComment": "AI Feedback",
+    "viewAnswers": "View Answers",
+    "retry": "Try Again",
+    "explanation": "Explanation",
+    "correctAnswer": "Correct Answer",
+    "yourAnswer": "Your Answer",
+    "enterAnswer": "Enter answer...",
+    "perfectScore": "Perfect! Excellent!",
+    "excellentScore": "Excellent! Keep it up!",
+    "passScore": "Passed, but keep practicing!",
+    "failScore": "Needs more practice!",
+    "estimatedTime": "Est. 2-3 minutes",
+    "questionsCount": "{count} questions",
+    "error": {
+      "generateFailed": "Failed to generate quiz",
+      "emptyDocument": "Document is empty, cannot generate quiz",
+      "submitFailed": "Failed to submit answers",
+      "invalidParam": "Invalid @quiz parameter. Use a number for question count, e.g., @quiz 5 (1-20 questions)"
+    }
   }
 }

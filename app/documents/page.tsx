@@ -13,7 +13,7 @@ import { OutlineView } from '@/components/sidebar/OutlineView';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { Button } from '@/components/ui/button';
-import { LogOut, FileText, Plus, FileStack, Loader2, Upload } from 'lucide-react';
+import { LogOut, FileText, Plus, FileStack, Loader2, Upload, FileUp } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useDocumentStore } from '@/lib/store/document-store';
 import { ResizeHandle } from '@/components/ui/resize-handle';
@@ -35,6 +35,8 @@ export default function EditorPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const [isImportingPDF, setIsImportingPDF] = useState(false);
   const { currentDocument, loadDocuments, loadDocument, createNewDocument, saveDocument, removeDocument, pinDocument, renameDocument } = useDocument();
   const { loadFolders, createNewFolder, renameFolder, removeFolder } = useFolder();
   const { sidebarOpen, outlineOpen, sidebarWidth, resizeSidebarBy } =
@@ -168,6 +170,71 @@ export default function EditorPage() {
       toast.error(t('documents.importFailed') + ': ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleImportPDF = () => {
+    pdfInputRef.current?.click();
+  };
+
+  const handlePDFChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset file input so the same file can be selected again
+    e.target.value = '';
+
+    // Check file type
+    if (file.type !== 'application/pdf') {
+      toast.error('请选择 PDF 文件');
+      return;
+    }
+
+    // Check file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('PDF 文件太大，最大 50MB');
+      return;
+    }
+
+    setIsImportingPDF(true);
+    const toastId = toast.loading('正在解析 PDF...');
+
+    try {
+      // Dynamically import PDF parsing functions
+      const { parsePDF } = await import('@/lib/pdf');
+
+      // Parse PDF
+      const result = await parsePDF(file, {
+        mode: 'auto',
+        imageScale: 1.5,
+        maxPages: 50,
+      });
+
+      let content = '';
+      let title = file.name.replace(/\.pdf$/i, '');
+
+      if (result.type === 'markdown') {
+        content = result.content;
+        toast.loading(`已提取文本 (${result.content.length} 字符)`, { id: toastId });
+      } else {
+        // For image-based PDFs, we can't directly create a markdown document
+        // Show a message to the user
+        toast.error('此 PDF 为图片型，暂不支持直接创建文档。请在聊天中上传并使用 AI 分析。', { id: toastId, duration: 5000 });
+        setIsImportingPDF(false);
+        return;
+      }
+
+      // Create document with extracted content
+      const doc = await createNewDocument(null, { title, content });
+      toast.success('文档创建成功', { id: toastId });
+
+      // Navigate to the new document
+      window.location.href = `/document/${doc.id}`;
+    } catch (error) {
+      console.error('Error importing PDF:', error);
+      toast.error('导入 PDF 失败: ' + (error instanceof Error ? error.message : '未知错误'), { id: toastId });
+    } finally {
+      setIsImportingPDF(false);
     }
   };
 
@@ -312,6 +379,7 @@ export default function EditorPage() {
           onCreateDocument={handleCreateDocument}
           onCreateFolder={handleCreateFolder}
           onImportMarkdown={handleImportMarkdown}
+          onImportPDF={handleImportPDF}
           onDeleteDocument={handleDeleteDocument}
           onBatchDelete={handleBatchDelete}
           onDeleteFolder={handleDeleteFolder}
@@ -375,6 +443,10 @@ export default function EditorPage() {
                     <Upload className="h-4 w-4 mr-2" />
                     {t('documents.importMarkdown')}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleImportPDF} disabled={isImportingPDF}>
+                    <FileUp className="h-4 w-4 mr-2" />
+                    {t('documents.importPDF')}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -395,6 +467,15 @@ export default function EditorPage() {
         type="file"
         accept=".md,.markdown"
         onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Hidden file input for PDF import */}
+      <input
+        ref={pdfInputRef}
+        type="file"
+        accept="application/pdf"
+        onChange={handlePDFChange}
         className="hidden"
       />
 

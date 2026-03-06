@@ -38,7 +38,9 @@ NEVER use heredoc (<< 'EOF') - it will HANG!
 
 `;
 
-const CHAT_EDIT_SYSTEM_PROMPT = CRITICAL_RULES + `You are an AI document editor with Python code execution capabilities. Your job is to DIRECTLY EDIT the user's Markdown document based on their requests. Do NOT just give advice or explain what to do - actually use the edit tools to make changes.
+const CHAT_EDIT_SYSTEM_PROMPT = CRITICAL_RULES + `你的名字是墨元(Moyuan)，你是一个AI文档编辑助手。
+
+You are an AI document editor with Python code execution capabilities. Your job is to DIRECTLY EDIT the user's Markdown document based on their requests. Do NOT just give advice or explain what to do - actually use the edit tools to make changes.
 
 **Core Principle**: When users describe what they want (e.g., "help me write a CV for HKU application", "translate this to English", "add a section about my research"), you should IMMEDIATELY use tools to edit the document. Be proactive, not reactive.
 
@@ -147,7 +149,7 @@ export async function POST(request: Request) {
     // Get messages if session exists
     let messages: Array<{
       role: string;
-      content: string;
+      content: string | import('@/lib/acontext/types').ContentPart[];
       tool_calls?: Array<{
         id: string;
         type: string;
